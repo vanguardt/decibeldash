@@ -4,7 +4,7 @@ import { Mic, Square, Save, Volume2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MobileSelect from "@/components/ui/mobile-select";
 import { useToast } from "@/components/ui/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import DecibelGauge from "@/components/DecibelGauge";
@@ -338,18 +338,19 @@ export default function Home() {
               className="bg-background"
             />
 
-            <Select value={saveCategory} onValueChange={setSaveCategory}>
-              <SelectTrigger className="bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mechanical">Mechanical</SelectItem>
-                <SelectItem value="membrane">Membrane</SelectItem>
-                <SelectItem value="scissor">Scissor</SelectItem>
-                <SelectItem value="optical">Optical</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <MobileSelect
+              value={saveCategory}
+              onValueChange={setSaveCategory}
+              placeholder="Select type"
+              className="bg-background"
+              options={[
+                { value: "mechanical", label: "Mechanical" },
+                { value: "membrane", label: "Membrane" },
+                { value: "scissor", label: "Scissor" },
+                { value: "optical", label: "Optical" },
+                { value: "other", label: "Other" },
+              ]}
+            />
 
             <Textarea
               placeholder="Notes (optional)"

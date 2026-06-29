@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { AnimatePresence } from "framer-motion";
+import MobileSelect from "@/components/ui/mobile-select";
+import PullToRefresh from "@/components/PullToRefresh";
 import RecordingCard from "@/components/RecordingCard";
 
 export default function Recordings() {
@@ -16,7 +17,7 @@ export default function Recordings() {
   const [sortBy, setSortBy] = useState("newest");
   const [filterCategory, setFilterCategory] = useState("all");
 
-  const loadRecordings = async () => {
+  const loadRecordings = useCallback(async () => {
     setLoading(true);
     try {
       const data = await base44.entities.SoundRecording.list("-created_date", 100);
@@ -26,7 +27,7 @@ export default function Recordings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadRecordings();
@@ -55,9 +56,10 @@ export default function Recordings() {
   else if (sortBy === "name") filtered.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <div className="min-h-screen px-4 py-8 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight mb-1">Recordings</h1>
-      <p className="text-xs text-muted-foreground mb-6">All your saved sound measurements</p>
+    <PullToRefresh onRefresh={loadRecordings}>
+      <div className="min-h-screen px-4 py-8 max-w-lg mx-auto">
+        <h1 className="text-2xl font-bold tracking-tight mb-1">Recordings</h1>
+        <p className="text-xs text-muted-foreground mb-6">All your saved sound measurements</p>
 
       {/* Search & Filters */}
       <div className="space-y-3 mb-6">
@@ -71,30 +73,32 @@ export default function Recordings() {
           />
         </div>
         <div className="flex gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="bg-card flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="quietest">Quietest first</SelectItem>
-              <SelectItem value="loudest">Loudest first</SelectItem>
-              <SelectItem value="name">Name A–Z</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="bg-card flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="mechanical">Mechanical</SelectItem>
-              <SelectItem value="membrane">Membrane</SelectItem>
-              <SelectItem value="scissor">Scissor</SelectItem>
-              <SelectItem value="optical">Optical</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={sortBy}
+            onValueChange={setSortBy}
+            placeholder="Sort by"
+            className="bg-card flex-1"
+            options={[
+              { value: "newest", label: "Newest first" },
+              { value: "quietest", label: "Quietest first" },
+              { value: "loudest", label: "Loudest first" },
+              { value: "name", label: "Name A–Z" },
+            ]}
+          />
+          <MobileSelect
+            value={filterCategory}
+            onValueChange={setFilterCategory}
+            placeholder="All types"
+            className="bg-card flex-1"
+            options={[
+              { value: "all", label: "All types" },
+              { value: "mechanical", label: "Mechanical" },
+              { value: "membrane", label: "Membrane" },
+              { value: "scissor", label: "Scissor" },
+              { value: "optical", label: "Optical" },
+              { value: "other", label: "Other" },
+            ]}
+          />
         </div>
       </div>
 
@@ -121,6 +125,7 @@ export default function Recordings() {
           </AnimatePresence>
         </div>
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

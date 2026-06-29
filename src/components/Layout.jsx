@@ -1,7 +1,6 @@
-import React from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
 import { Mic, List, GitCompare, Settings as SettingsIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 
 const navItems = [
@@ -11,6 +10,41 @@ const navItems = [
   { path: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
+const keepAlivePaths = ["/", "/recordings", "/compare"];
+
+function KeepAliveOutlet() {
+  const location = useLocation();
+  const outlet = useOutlet();
+  const [cache, setCache] = useState({});
+
+  useEffect(() => {
+    if (keepAlivePaths.includes(location.pathname) && outlet) {
+      setCache((prev) =>
+        prev[location.pathname] === outlet
+          ? prev
+          : { ...prev, [location.pathname]: outlet }
+      );
+    }
+  }, [location.pathname, outlet]);
+
+  if (keepAlivePaths.includes(location.pathname)) {
+    return (
+      <>
+        {keepAlivePaths.map((path) => (
+          <div
+            key={path}
+            style={{ display: location.pathname === path ? "block" : "none" }}
+          >
+            {cache[path] || null}
+          </div>
+        ))}
+      </>
+    );
+  }
+
+  return outlet;
+}
+
 export default function Layout() {
   const { pathname } = useLocation();
 
@@ -18,17 +52,7 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 pb-20">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <KeepAliveOutlet />
       </main>
 
       {/* Bottom nav */}

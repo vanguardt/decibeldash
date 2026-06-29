@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Drawer } from "vaul";
+import {
+  Drawer,
+  DrawerContent,
+} from "@/components/ui/drawer";
 import {
   Select,
   SelectContent,
@@ -67,7 +70,7 @@ export default function MobileSelect({
         <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
       </button>
       <Drawer open={open} onOpenChange={setOpen}>
-        <Drawer.Content className="max-h-[70vh]">
+        <DrawerContent className="max-h-[70vh]">
           <div className="mx-auto w-full max-w-lg">
             <div className="px-4 py-3 border-b border-border text-sm font-medium text-center">
               {placeholder}
@@ -91,7 +94,7 @@ export default function MobileSelect({
               ))}
             </div>
           </div>
-        </Drawer.Content>
+        </DrawerContent>
       </Drawer>
     </>
   );

@@ -1,0 +1,51 @@
+{
+  "name": "SoundRecording",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the keyboard or device tested"
+    },
+    "avg_decibels": {
+      "type": "number",
+      "description": "Average decibel level recorded"
+    },
+    "peak_decibels": {
+      "type": "number",
+      "description": "Peak decibel level recorded"
+    },
+    "min_decibels": {
+      "type": "number",
+      "description": "Minimum decibel level recorded"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Duration of the recording in seconds"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about the recording"
+    },
+    "decibel_samples": {
+      "type": "string",
+      "description": "JSON string of decibel samples over time"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "mechanical",
+        "membrane",
+        "scissor",
+        "optical",
+        "other"
+      ],
+      "default": "other",
+      "description": "Type of keyboard"
+    }
+  },
+  "required": [
+    "name",
+    "avg_decibels",
+    "peak_decibels"
+  ]
+}

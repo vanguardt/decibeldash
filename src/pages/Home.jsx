@@ -171,10 +171,13 @@ export default function Home() {
       return;
     }
 
-    setIsSaving(true);
     const avgDb = samplesRef.current.length > 0
       ? samplesRef.current.reduce((s, sample) => s + sample.db, 0) / samplesRef.current.length
       : currentDb;
+
+    // Optimistically close the form and show success immediately
+    resetRecording();
+    toast({ title: "Recording saved!" });
 
     try {
       await base44.entities.SoundRecording.create({
@@ -190,13 +193,8 @@ export default function Home() {
         accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
         total_words: wpm > 0 ? Math.round((elapsedTime / 60) * wpm) : undefined,
       });
-
-      toast({ title: "Recording saved!" });
-      resetRecording();
     } catch (err) {
       toast({ title: "Failed to save", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -362,9 +360,9 @@ export default function Home() {
             />
 
             <div className="flex gap-2">
-              <Button className="flex-1" onClick={saveRecording} disabled={isSaving}>
+              <Button className="flex-1" onClick={saveRecording}>
                 <Save className="w-4 h-4 mr-2" />
-                {isSaving ? "Saving…" : "Save"}
+                Save
               </Button>
               <Button variant="outline" onClick={resetRecording}>
                 Discard

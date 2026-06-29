@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import DecibelGauge from "@/components/DecibelGauge";
 import WaveformVisualizer from "@/components/WaveformVisualizer";
+import TypingTest from "@/components/TypingTest";
 
 export default function Home() {
   const { toast } = useToast();
@@ -25,6 +26,8 @@ export default function Home() {
   const [saveCategory, setSaveCategory] = useState("other");
   const [isSaving, setIsSaving] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [wpm, setWpm] = useState(0);
+  const [accuracy, setAccuracy] = useState(100);
 
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
@@ -85,6 +88,8 @@ export default function Home() {
       peakRef.current = 0;
       minRef.current = Infinity;
       setElapsedTime(0);
+      setWpm(0);
+      setAccuracy(100);
       startTimeRef.current = Date.now();
       setIsRecording(true);
       setPermissionDenied(false);
@@ -142,6 +147,8 @@ export default function Home() {
     setSamples([...samplesRef.current]);
     setIsRecording(false);
     setShowSaveForm(true);
+    // Auto-fill name from WPM context
+    setSaveName(prev => prev || "");
   };
 
   const resetRecording = () => {
@@ -150,6 +157,8 @@ export default function Home() {
     setMinDb(Infinity);
     setSamples([]);
     setElapsedTime(0);
+    setWpm(0);
+    setAccuracy(100);
     setShowSaveForm(false);
     setSaveName("");
     setSaveNotes("");
@@ -177,6 +186,9 @@ export default function Home() {
         notes: saveNotes.trim() || undefined,
         category: saveCategory,
         decibel_samples: JSON.stringify(samplesRef.current.slice(0, 500)),
+        wpm: wpm > 0 ? wpm : undefined,
+        accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
+        total_words: wpm > 0 ? Math.round((elapsedTime / 60) * wpm) : undefined,
       });
 
       toast({ title: "Recording saved!" });
@@ -230,12 +242,25 @@ export default function Home() {
         <WaveformVisualizer analyser={analyserNode} isRecording={isRecording} />
       </div>
 
+      {/* Typing test */}
+      {(isRecording || showSaveForm) && (
+        <div className="w-full mt-4">
+          <TypingTest
+            isRecording={isRecording}
+            onWpmUpdate={(newWpm, acc) => {
+              setWpm(newWpm);
+              setAccuracy(acc);
+            }}
+          />
+        </div>
+      )}
+
       {/* Stats row */}
       {(isRecording || peakDb > 0) && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-3 gap-3 w-full mt-4"
+          className={`grid gap-3 w-full mt-4 ${wpm > 0 ? "grid-cols-4" : "grid-cols-3"}`}
         >
           <div className="bg-card border border-border rounded-lg p-3 text-center">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Min</p>
@@ -251,6 +276,12 @@ export default function Home() {
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Peak</p>
             <p className="text-lg font-mono font-bold text-amber-400">{peakDb.toFixed(1)}</p>
           </div>
+          {wpm > 0 && (
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-center">
+              <p className="text-[10px] uppercase tracking-widest text-primary/70">WPM</p>
+              <p className="text-lg font-mono font-bold text-primary">{wpm}</p>
+            </div>
+          )}
         </motion.div>
       )}
 

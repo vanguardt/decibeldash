@@ -41,6 +41,18 @@
       ],
       "default": "other",
       "description": "Type of keyboard"
+    },
+    "wpm": {
+      "type": "number",
+      "description": "Words per minute typed during recording"
+    },
+    "accuracy": {
+      "type": "number",
+      "description": "Typing accuracy percentage"
+    },
+    "total_words": {
+      "type": "number",
+      "description": "Total words typed in the typing test"
     }
   },
   "required": [

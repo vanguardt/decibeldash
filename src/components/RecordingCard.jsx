@@ -69,6 +69,11 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
                 {recording.duration_seconds?.toFixed(0)}s
               </span>
             )}
+            {recording.wpm > 0 && (
+              <span className="flex items-center gap-1 text-primary">
+                {recording.wpm} WPM
+              </span>
+            )}
           </div>
         </div>
 

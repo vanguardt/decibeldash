@@ -25,8 +25,17 @@ export default function ComparisonChart({ recordings }) {
     avg: r.avg_decibels,
     peak: r.peak_decibels,
     min: r.min_decibels,
+    wpm: r.wpm || 0,
     color: COLORS[i % COLORS.length],
   }));
+
+  const wpmData = recordings
+    .filter((r) => r.wpm > 0)
+    .map((r, i) => ({
+      name: r.name.length > 12 ? r.name.slice(0, 12) + "…" : r.name,
+      wpm: r.wpm,
+      color: COLORS[recordings.indexOf(r) % COLORS.length],
+    }));
 
   const radarData = [
     { metric: "Average", ...Object.fromEntries(recordings.map((r, i) => [`kb${i}`, r.avg_decibels])) },
@@ -34,6 +43,11 @@ export default function ComparisonChart({ recordings }) {
     { metric: "Min", ...Object.fromEntries(recordings.map((r, i) => [`kb${i}`, r.min_decibels || 0])) },
     { metric: "Range", ...Object.fromEntries(recordings.map((r, i) => [`kb${i}`, (r.peak_decibels || 0) - (r.min_decibels || 0)])) },
   ];
+
+  const hasWpm = recordings.some((r) => r.wpm > 0);
+  if (hasWpm) {
+    radarData.push({ metric: "WPM", ...Object.fromEntries(recordings.map((r, i) => [`kb${i}`, r.wpm || 0])) });
+  }
 
   // Find the quietest
   const sorted = [...recordings].sort((a, b) => a.avg_decibels - b.avg_decibels);
@@ -88,6 +102,31 @@ export default function ComparisonChart({ recordings }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* WPM Chart */}
+      {hasWpm && (
+        <div className="bg-card border border-border rounded-xl p-4">
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-4">Typing Speed (WPM)</h3>
+          <ResponsiveContainer width="100%" height={Math.max(120, wpmData.length * 50)}>
+            <BarChart data={wpmData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 12%)" horizontal={false} />
+              <XAxis type="number" tick={{ fill: "hsl(215, 14%, 50%)", fontSize: 11 }} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={{ fill: "hsl(215, 14%, 50%)", fontSize: 11 }}
+                width={90}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="wpm" name="WPM" radius={[0, 6, 6, 0]}>
+                {wpmData.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Radar Chart for multi-dimension comparison */}
       {recordings.length >= 2 && (

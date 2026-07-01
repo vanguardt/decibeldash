@@ -195,7 +195,7 @@ export default function Home() {
       streamRef.current.getTracks().forEach((t) => t.stop());
     }
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current.close().catch(() => {});
     }
 
     const wasMetering = meteringStartedRef.current;
@@ -275,7 +275,7 @@ export default function Home() {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
-      if (audioContextRef.current) audioContextRef.current.close();
+      if (audioContextRef.current) audioContextRef.current.close().catch(() => {});
     };
   }, []);
 

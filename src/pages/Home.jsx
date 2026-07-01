@@ -26,17 +26,20 @@ export default function Home() {
   const [saveCategory, setSaveCategory] = useState("other");
   const [isSaving, setIsSaving] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [meteringStarted, setMeteringStarted] = useState(false);
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
 
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
+  const analyserRef = useRef(null);
   const animFrameRef = useRef(null);
   const startTimeRef = useRef(null);
   const timerRef = useRef(null);
   const samplesRef = useRef([]);
   const peakRef = useRef(0);
   const minRef = useRef(Infinity);
+  const meteringStartedRef = useRef(false);
 
   const calculateDecibels = useCallback((analyser) => {
     const dataArray = new Float32Array(analyser.fftSize);
@@ -78,6 +81,7 @@ export default function Home() {
 
       audioContextRef.current = audioContext;
       streamRef.current = stream;
+      analyserRef.current = analyser;
       setAnalyserNode(analyser);
 
       // Reset
@@ -90,40 +94,11 @@ export default function Home() {
       setElapsedTime(0);
       setWpm(0);
       setAccuracy(100);
-      startTimeRef.current = Date.now();
+      setMeteringStarted(false);
+      meteringStartedRef.current = false;
       setIsRecording(true);
       setPermissionDenied(false);
-
-      // Timer
-      timerRef.current = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
-      }, 1000);
-
-      // Metering loop
-      const meter = () => {
-        const db = calculateDecibels(analyser);
-        setCurrentDb(db);
-
-        if (db > peakRef.current) {
-          peakRef.current = db;
-          setPeakDb(db);
-        }
-        if (db < minRef.current && db > 5) {
-          minRef.current = db;
-          setMinDb(db);
-        }
-
-        // Sample every 200ms
-        const now = Date.now();
-        const lastSample = samplesRef.current[samplesRef.current.length - 1];
-        if (!lastSample || now - lastSample.t > 200) {
-          samplesRef.current.push({ t: now - startTimeRef.current, db });
-        }
-
-        animFrameRef.current = requestAnimationFrame(meter);
-      };
-
-      meter();
+      // Metering begins on the first keystroke (see beginMetering)
     } catch (err) {
       setPermissionDenied(true);
       toast({
@@ -132,6 +107,46 @@ export default function Home() {
         variant: "destructive",
       });
     }
+  };
+
+  // Begins audio metering + timer on the first keystroke
+  const beginMetering = () => {
+    if (meteringStartedRef.current || !analyserRef.current) return;
+    const analyser = analyserRef.current;
+    meteringStartedRef.current = true;
+    setMeteringStarted(true);
+    startTimeRef.current = Date.now();
+
+    // Timer (counts up; displayed as a 30s countdown)
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 250);
+
+    // Metering loop
+    const meter = () => {
+      const db = calculateDecibels(analyser);
+      setCurrentDb(db);
+
+      if (db > peakRef.current) {
+        peakRef.current = db;
+        setPeakDb(db);
+      }
+      if (db < minRef.current && db > 5) {
+        minRef.current = db;
+        setMinDb(db);
+      }
+
+      // Sample every 200ms
+      const now = Date.now();
+      const lastSample = samplesRef.current[samplesRef.current.length - 1];
+      if (!lastSample || now - lastSample.t > 200) {
+        samplesRef.current.push({ t: now - startTimeRef.current, db });
+      }
+
+      animFrameRef.current = requestAnimationFrame(meter);
+    };
+
+    meter();
   };
 
   const stopRecording = () => {
@@ -144,10 +159,19 @@ export default function Home() {
       audioContextRef.current.close();
     }
 
-    setSamples([...samplesRef.current]);
+    const wasMetering = meteringStartedRef.current;
+    meteringStartedRef.current = false;
+    setMeteringStarted(false);
     setIsRecording(false);
+
+    // No keystroke happened → nothing to save
+    if (!wasMetering || samplesRef.current.length === 0) {
+      resetRecording();
+      return;
+    }
+
+    setSamples([...samplesRef.current]);
     setShowSaveForm(true);
-    // Auto-fill name from WPM context
     setSaveName(prev => prev || "");
   };
 
@@ -163,6 +187,8 @@ export default function Home() {
     setSaveName("");
     setSaveNotes("");
     setSaveCategory("other");
+    setMeteringStarted(false);
+    meteringStartedRef.current = false;
   };
 
   const saveRecording = async () => {
@@ -222,22 +248,33 @@ export default function Home() {
       </div>
 
       {/* Gauge */}
-      <DecibelGauge value={currentDb} peak={peakDb} isRecording={isRecording} />
+      <DecibelGauge value={currentDb} peak={peakDb} isRecording={meteringStarted} />
 
-      {/* Timer */}
-      {(isRecording || elapsedTime > 0) && (
+      {/* Timer — 30s countdown, starts on first keystroke */}
+      {isRecording && !meteringStarted && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-4 text-sm text-muted-foreground"
+        >
+          Start typing to begin recording
+        </motion.p>
+      )}
+      {(meteringStarted || elapsedTime > 0) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-4 text-2xl font-mono text-muted-foreground"
+          className={`mt-4 text-2xl font-mono ${
+            30 - elapsedTime <= 5 ? "text-destructive" : "text-muted-foreground"
+          }`}
         >
-          {formatTime(elapsedTime)}
+          {formatTime(Math.max(0, 30 - elapsedTime))}
         </motion.div>
       )}
 
       {/* Waveform */}
       <div className="w-full mt-6">
-        <WaveformVisualizer analyser={analyserNode} isRecording={isRecording} />
+        <WaveformVisualizer analyser={analyserNode} isRecording={meteringStarted} />
       </div>
 
       {/* Typing test */}
@@ -245,6 +282,8 @@ export default function Home() {
         <div className="w-full mt-4">
           <TypingTest
             isRecording={isRecording}
+            onFirstKeystroke={beginMetering}
+            onComplete={stopRecording}
             onWpmUpdate={(newWpm, acc) => {
               setWpm(newWpm);
               setAccuracy(acc);
@@ -254,7 +293,7 @@ export default function Home() {
       )}
 
       {/* Stats row */}
-      {(isRecording || peakDb > 0) && (
+      {(meteringStarted || peakDb > 0) && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

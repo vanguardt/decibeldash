@@ -53,6 +53,10 @@
     "total_words": {
       "type": "number",
       "description": "Total words typed in the typing test"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "URL of the recorded audio file for playback"
     }
   },
   "required": [

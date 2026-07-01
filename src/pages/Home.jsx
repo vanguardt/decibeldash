@@ -40,6 +40,10 @@ export default function Home() {
   const peakRef = useRef(0);
   const minRef = useRef(Infinity);
   const meteringStartedRef = useRef(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioUrlRef = useRef(null);
+  const pendingUploadRef = useRef(null);
 
   const calculateDecibels = useCallback((analyser) => {
     const dataArray = new Float32Array(analyser.fftSize);
@@ -96,6 +100,10 @@ export default function Home() {
       setAccuracy(100);
       setMeteringStarted(false);
       meteringStartedRef.current = false;
+      mediaRecorderRef.current = null;
+      audioChunksRef.current = [];
+      audioUrlRef.current = null;
+      pendingUploadRef.current = null;
       setIsRecording(true);
       setPermissionDenied(false);
       // Metering begins on the first keystroke (see beginMetering)
@@ -116,6 +124,34 @@ export default function Home() {
     meteringStartedRef.current = true;
     setMeteringStarted(true);
     startTimeRef.current = Date.now();
+
+    // Start audio capture for playback (resolves pendingUploadRef on stop)
+    let resolveUpload;
+    pendingUploadRef.current = new Promise((resolve) => { resolveUpload = resolve; });
+    try {
+      const mr = new MediaRecorder(streamRef.current);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        try {
+          const mimeType = mr.mimeType || "audio/webm";
+          const blob = new Blob(audioChunksRef.current, { type: mimeType });
+          if (blob.size === 0) { audioUrlRef.current = null; resolveUpload(null); return; }
+          const ext = mimeType.includes("mp4") ? "m4a" : "webm";
+          const file = new File([blob], `rec-${Date.now()}.${ext}`, { type: mimeType });
+          const res = await base44.integrations.Core.UploadFile({ file });
+          audioUrlRef.current = res.file_url;
+          resolveUpload(res.file_url);
+        } catch {
+          audioUrlRef.current = null;
+          resolveUpload(null);
+        }
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+    } catch {
+      pendingUploadRef.current = Promise.resolve(null);
+    }
 
     // Timer (counts up; displayed as a 30s countdown)
     timerRef.current = setInterval(() => {
@@ -152,6 +188,9 @@ export default function Home() {
   const stopRecording = () => {
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
     }
@@ -205,6 +244,12 @@ export default function Home() {
     resetRecording();
     toast({ title: "Recording saved!" });
 
+    // Wait for the audio file upload (started when recording stopped)
+    let audioUrl = null;
+    if (pendingUploadRef.current) {
+      try { audioUrl = await pendingUploadRef.current; } catch { audioUrl = null; }
+    }
+
     try {
       await base44.entities.SoundRecording.create({
         name: saveName.trim(),
@@ -218,6 +263,7 @@ export default function Home() {
         wpm: wpm > 0 ? wpm : undefined,
         accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
         total_words: wpm > 0 ? Math.round((elapsedTime / 60) * wpm) : undefined,
+        audio_url: audioUrl || undefined,
       });
     } catch (err) {
       toast({ title: "Failed to save", variant: "destructive" });

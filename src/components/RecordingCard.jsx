@@ -3,6 +3,8 @@ import { Trash2, Volume2, Clock, ArrowUp, ArrowDown, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import ShareButton from "@/components/ShareButton";
+import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -77,18 +79,26 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete?.(recording.id);
-          }}
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <ShareButton recording={recording} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(recording.id);
+            }}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
+
+      {/* Audio playback */}
+      {recording.audio_url && (
+        <RecordingAudioPlayer url={recording.audio_url} />
+      )}
 
       {/* Mini bar indicator */}
       <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden">

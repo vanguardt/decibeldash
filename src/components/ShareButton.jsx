@@ -6,21 +6,14 @@ import { makeStatsImage } from "@/lib/statsCard";
 export default function ShareButton({ recording, className }) {
   const { toast } = useToast();
   const [imgBlob, setImgBlob] = useState(null);
-  const [audioBlob, setAudioBlob] = useState(null);
 
-  // Pre-generate the stats card image + fetch the audio so the share/download
-  // call runs synchronously within the user's tap gesture.
+  // Pre-generate the stats card image so the share/download call runs
+  // synchronously within the user's tap gesture.
   useEffect(() => {
     let cancelled = false;
     makeStatsImage(recording)
       .then((b) => { if (!cancelled) setImgBlob(b); })
       .catch(() => {});
-    if (recording.audio_url) {
-      fetch(recording.audio_url)
-        .then((r) => r.blob())
-        .then((b) => { if (!cancelled) setAudioBlob(b); })
-        .catch(() => {});
-    }
     return () => { cancelled = true; };
   }, [recording]);
 
@@ -59,28 +52,19 @@ export default function ShareButton({ recording, className }) {
     e.stopPropagation();
     const text = buildText();
 
-    const files = [];
-    if (imgBlob) files.push(new File([imgBlob], `${safeName()}.png`, { type: "image/png" }));
-    if (audioBlob) {
-      const t = audioBlob.type || "audio/webm";
-      const ext = t.includes("mp4") ? "m4a" : "webm";
-      files.push(new File([audioBlob], `${safeName()}.${ext}`, { type: t }));
-    }
-
-    // Share the stats image + audio together
-    if (files.length > 0 && typeof navigator.canShare === "function" && navigator.canShare({ files })) {
-      navigator.share({ title: recording.name, text, files }).catch(() => {});
+    if (imgBlob) {
+      const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
+      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+        navigator.share({ title: recording.name, text, files: [file] }).catch(() => {});
+        return;
+      }
+      // Share sheet w/ files not supported → download the results image
+      downloadBlob(imgBlob, `${safeName()}.png`);
+      toast({ title: "Saved results to your device" });
       return;
     }
 
-    // Download the stats image + audio to the device
-    if (files.length > 0) {
-      files.forEach((f) => downloadBlob(f, f.name));
-      toast({ title: "Saved stats + recording to your device" });
-      return;
-    }
-
-    // Not ready yet — share stats text + audio link
+    // Image not ready yet — share stats text + audio link
     const shareData = { title: recording.name, text };
     if (recording.audio_url) shareData.url = recording.audio_url;
     if (navigator.share) {

@@ -48,32 +48,43 @@ export default function ShareButton({ recording, className }) {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
 
-  const handleShare = (e) => {
+  const handleShare = async (e) => {
     e.stopPropagation();
     const text = buildText();
 
     if (imgBlob) {
       const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
+      // Mobile: native share sheet (Discord appears as a target)
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
         navigator.share({ title: recording.name, text, files: [file] }).catch(() => {});
         return;
       }
-      // Share sheet w/ files not supported → download the results image
+      // Desktop: copy the image to the clipboard so it can be pasted into Discord
+      if (navigator.clipboard && window.ClipboardItem) {
+        try {
+          const item = new ClipboardItem({
+            "image/png": imgBlob,
+            "text/plain": new Blob([text], { type: "text/plain" }),
+          });
+          await navigator.clipboard.write([item]);
+          toast({ title: "Copied — paste into Discord" });
+          return;
+        } catch {}
+      }
+      // Last resort: download the results image
       downloadBlob(imgBlob, `${safeName()}.png`);
       toast({ title: "Saved results to your device" });
       return;
     }
 
-    // Image not ready yet — share stats text + audio link
-    const shareData = { title: recording.name, text };
-    if (recording.audio_url) shareData.url = recording.audio_url;
-    if (navigator.share) {
-      navigator.share(shareData).catch(() => {});
-    } else {
-      navigator.clipboard
-        .writeText(text + (recording.audio_url ? `\n${recording.audio_url}` : ""))
-        .then(() => toast({ title: "Copied to clipboard" }))
-        .catch(() => toast({ title: "Couldn't share", variant: "destructive" }));
+    // Image not ready yet — copy the stats text to clipboard
+    try {
+      await navigator.clipboard.writeText(
+        text + (recording.audio_url ? `\n${recording.audio_url}` : "")
+      );
+      toast({ title: "Copied to clipboard" });
+    } catch {
+      toast({ title: "Couldn't share", variant: "destructive" });
     }
   };
 

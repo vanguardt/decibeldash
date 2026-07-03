@@ -1,21 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { makeStatsImage } from "@/lib/statsCard";
 
 export default function ShareButton({ recording, className }) {
   const { toast } = useToast();
+  const [imgBlob, setImgBlob] = useState(null);
   const [audioBlob, setAudioBlob] = useState(null);
 
-  // Pre-fetch the audio so navigator.share runs within the tap gesture
+  // Pre-generate the stats card image + fetch the audio so the share/download
+  // call runs synchronously within the user's tap gesture.
   useEffect(() => {
-    if (!recording.audio_url) return;
     let cancelled = false;
-    fetch(recording.audio_url)
-      .then((r) => r.blob())
-      .then((b) => { if (!cancelled) setAudioBlob(b); })
+    makeStatsImage(recording)
+      .then((b) => { if (!cancelled) setImgBlob(b); })
       .catch(() => {});
+    if (recording.audio_url) {
+      fetch(recording.audio_url)
+        .then((r) => r.blob())
+        .then((b) => { if (!cancelled) setAudioBlob(b); })
+        .catch(() => {});
+    }
     return () => { cancelled = true; };
-  }, [recording.audio_url]);
+  }, [recording]);
 
   const buildText = () => {
     const lines = [`⌨️ ${recording.name}`];
@@ -34,43 +41,55 @@ export default function ShareButton({ recording, className }) {
     return lines.join("\n");
   };
 
-  const handleShare = async (e) => {
+  const safeName = () =>
+    (recording.name || "recording").replace(/[^a-z0-9-_ ]/gi, "").trim() || "recording";
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const handleShare = (e) => {
     e.stopPropagation();
     const text = buildText();
 
-    // Share the audio file + stats together when supported
-    if (audioBlob && typeof navigator.canShare === "function") {
-      const type = audioBlob.type || "audio/webm";
-      const ext = type.includes("mp4") ? "m4a" : "webm";
-      const file = new File([audioBlob], `${recording.name || "recording"}.${ext}`, { type });
-      if (navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: recording.name, text, files: [file] });
-        } catch (err) {
-          /* user cancelled */
-        }
-        return;
-      }
+    const files = [];
+    if (imgBlob) files.push(new File([imgBlob], `${safeName()}.png`, { type: "image/png" }));
+    if (audioBlob) {
+      const t = audioBlob.type || "audio/webm";
+      const ext = t.includes("mp4") ? "m4a" : "webm";
+      files.push(new File([audioBlob], `${safeName()}.${ext}`, { type: t }));
     }
 
-    // Fallback: stats text + audio link
+    // Share the stats image + audio together
+    if (files.length > 0 && typeof navigator.canShare === "function" && navigator.canShare({ files })) {
+      navigator.share({ title: recording.name, text, files }).catch(() => {});
+      return;
+    }
+
+    // Download the stats image + audio to the device
+    if (files.length > 0) {
+      files.forEach((f) => downloadBlob(f, f.name));
+      toast({ title: "Saved stats + recording to your device" });
+      return;
+    }
+
+    // Not ready yet — share stats text + audio link
     const shareData = { title: recording.name, text };
     if (recording.audio_url) shareData.url = recording.audio_url;
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        /* user cancelled */
-      }
+      navigator.share(shareData).catch(() => {});
     } else {
-      try {
-        await navigator.clipboard.writeText(
-          text + (recording.audio_url ? `\n${recording.audio_url}` : "")
-        );
-        toast({ title: "Copied to clipboard" });
-      } catch {
-        toast({ title: "Couldn't share", variant: "destructive" });
-      }
+      navigator.clipboard
+        .writeText(text + (recording.audio_url ? `\n${recording.audio_url}` : ""))
+        .then(() => toast({ title: "Copied to clipboard" }))
+        .catch(() => toast({ title: "Couldn't share", variant: "destructive" }));
     }
   };
 
@@ -79,7 +98,7 @@ export default function ShareButton({ recording, className }) {
       type="button"
       onClick={handleShare}
       className={`flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-colors shrink-0 ${className || ""}`}
-      aria-label="Share"
+      aria-label="Share or download"
     >
       <Share2 className="w-3.5 h-3.5" />
     </button>

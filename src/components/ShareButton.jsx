@@ -1,10 +1,21 @@
-import React, { useState } from "react";
-import { Share2, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ShareButton({ recording, className }) {
   const { toast } = useToast();
-  const [sharing, setSharing] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
+
+  // Pre-fetch the audio so navigator.share runs within the tap gesture
+  useEffect(() => {
+    if (!recording.audio_url) return;
+    let cancelled = false;
+    fetch(recording.audio_url)
+      .then((r) => r.blob())
+      .then((b) => { if (!cancelled) setAudioBlob(b); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [recording.audio_url]);
 
   const buildText = () => {
     const lines = [`⌨️ ${recording.name}`];
@@ -23,65 +34,54 @@ export default function ShareButton({ recording, className }) {
     return lines.join("\n");
   };
 
-  const shareAsText = (text) => {
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const text = buildText();
+
+    // Share the audio file + stats together when supported
+    if (audioBlob && typeof navigator.canShare === "function") {
+      const type = audioBlob.type || "audio/webm";
+      const ext = type.includes("mp4") ? "m4a" : "webm";
+      const file = new File([audioBlob], `${recording.name || "recording"}.${ext}`, { type });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ title: recording.name, text, files: [file] });
+        } catch (err) {
+          /* user cancelled */
+        }
+        return;
+      }
+    }
+
+    // Fallback: stats text + audio link
     const shareData = { title: recording.name, text };
     if (recording.audio_url) shareData.url = recording.audio_url;
     if (navigator.share) {
-      return navigator
-        .share(shareData)
-        .catch(() => {})
-        .finally(() => setSharing(false));
-    }
-    return navigator.clipboard
-      .writeText(text + (recording.audio_url ? `\n${recording.audio_url}` : ""))
-      .then(() => toast({ title: "Copied to clipboard" }))
-      .catch(() => toast({ title: "Couldn't share", variant: "destructive" }))
-      .finally(() => setSharing(false));
-  };
-
-  const handleShare = async (e) => {
-    e.stopPropagation();
-    if (sharing) return;
-    const text = buildText();
-
-    // Try sharing the audio file + stats together (Web Share API w/ files)
-    if (recording.audio_url && typeof navigator.canShare === "function") {
       try {
-        setSharing(true);
-        const res = await fetch(recording.audio_url);
-        const blob = await res.blob();
-        const type = blob.type || res.headers.get("Content-Type") || "audio/webm";
-        const ext = type.includes("mp4") ? "m4a" : "webm";
-        const file = new File([blob], `${recording.name || "recording"}.${ext}`, { type });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ title: recording.name, text, files: [file] });
-          setSharing(false);
-          return;
-        }
+        await navigator.share(shareData);
       } catch (err) {
-        // fall through to text + link share
+        /* user cancelled */
       }
-      // canShare w/ files not supported → fall back
-      return shareAsText(text);
+    } else {
+      try {
+        await navigator.clipboard.writeText(
+          text + (recording.audio_url ? `\n${recording.audio_url}` : "")
+        );
+        toast({ title: "Copied to clipboard" });
+      } catch {
+        toast({ title: "Couldn't share", variant: "destructive" });
+      }
     }
-
-    setSharing(true);
-    shareAsText(text);
   };
 
   return (
     <button
       type="button"
       onClick={handleShare}
-      disabled={sharing}
-      className={`flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-colors shrink-0 disabled:opacity-50 ${className || ""}`}
+      className={`flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-colors shrink-0 ${className || ""}`}
       aria-label="Share"
     >
-      {sharing ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      ) : (
-        <Share2 className="w-3.5 h-3.5" />
-      )}
+      <Share2 className="w-3.5 h-3.5" />
     </button>
   );
 }

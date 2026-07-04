@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import RecordingCard from "@/components/RecordingCard";
 import ComparisonChart from "@/components/ComparisonChart";
+import AudioUploader from "@/components/AudioUploader";
 
 export default function Compare() {
   const { toast } = useToast();
@@ -40,6 +41,8 @@ export default function Compare() {
       <p className="text-xs text-muted-foreground mb-6">
         Select 2–6 recordings to compare side by side
       </p>
+
+      <AudioUploader onUploaded={(r) => setRecordings((prev) => [r, ...prev])} />
 
       {loading ? (
         <div className="flex justify-center py-20">

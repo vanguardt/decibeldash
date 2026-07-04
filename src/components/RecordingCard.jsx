@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import ShareButton from "@/components/ShareButton";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
+import AudioDownloadButton from "@/components/AudioDownloadButton";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -81,6 +82,9 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
 
         <div className="flex items-center gap-1 shrink-0">
           <ShareButton recording={recording} />
+          {recording.audio_url && (
+            <AudioDownloadButton url={recording.audio_url} name={recording.name} />
+          )}
           <Button
             variant="ghost"
             size="icon"

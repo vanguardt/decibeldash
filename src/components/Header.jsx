@@ -6,6 +6,7 @@ const titles = {
   "/": "Sound Meter",
   "/recordings": "Recordings",
   "/compare": "Compare",
+  "/rankings": "Rankings",
   "/settings": "Settings",
 };
 

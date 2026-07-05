@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Trash2, LogOut, ShieldAlert, Loader2 } from "lucide-react";
+import { Trash2, LogOut, ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUpdateChecker } from "@/hooks/useUpdateChecker.jsx";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,17 @@ export default function Settings() {
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
   const [open, setOpen] = useState(false);
+  const { checkForUpdates } = useUpdateChecker();
+  const [checking, setChecking] = useState(false);
+
+  const handleCheckUpdates = async () => {
+    setChecking(true);
+    try {
+      await checkForUpdates(true);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -39,6 +51,20 @@ export default function Settings() {
 
   return (
     <div className="px-4 py-6 max-w-lg mx-auto space-y-6">
+      {/* About section */}
+      <section className="space-y-2">
+        <h2 className="text-xs uppercase tracking-widest text-muted-foreground px-1">About</h2>
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-3"
+          onClick={handleCheckUpdates}
+          disabled={checking}
+        >
+          <RefreshCw className={`w-4 h-4 ${checking ? "animate-spin" : ""}`} />
+          {checking ? "Checking…" : "Check for Updates"}
+        </Button>
+      </section>
+
       {/* Account section */}
       <section className="space-y-2">
         <h2 className="text-xs uppercase tracking-widest text-muted-foreground px-1">Account</h2>

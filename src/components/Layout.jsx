@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
 import { Mic, List, GitCompare, Trophy, Settings as SettingsIcon } from "lucide-react";
 import Header from "@/components/Header";
+import { useUpdateChecker } from "@/hooks/useUpdateChecker.jsx";
 
 const navItems = [
   { path: "/", icon: Mic, label: "Record" },
@@ -48,6 +49,7 @@ function KeepAliveOutlet() {
 
 export default function Layout() {
   const { pathname } = useLocation();
+  useUpdateChecker();
 
   return (
     <div className="min-h-screen flex flex-col">

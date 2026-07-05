@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Mic, Square, Save, Volume2, RotateCcw } from "lucide-react";
+import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,8 @@ export default function Home() {
   const [meteringStarted, setMeteringStarted] = useState(false);
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
+  const [soundOnly, setSoundOnly] = useState(false);
+  const soundOnlyRef = useRef(false);
 
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
@@ -106,7 +108,10 @@ export default function Home() {
       pendingUploadRef.current = null;
       setIsRecording(true);
       setPermissionDenied(false);
-      // Metering begins on the first keystroke (see beginMetering)
+      // In Sound Only mode, metering starts immediately
+      if (soundOnlyRef.current) {
+        beginMetering();
+      }
     } catch (err) {
       setPermissionDenied(true);
       toast({
@@ -296,8 +301,32 @@ export default function Home() {
       {/* Gauge */}
       <DecibelGauge value={currentDb} peak={peakDb} isRecording={meteringStarted} />
 
-      {/* Timer — 30s countdown, starts on first keystroke */}
-      {isRecording && !meteringStarted && (
+      {/* Mode toggle (only when idle) */}
+      {!isRecording && !showSaveForm && (
+        <div className="flex items-center gap-1 p-1 bg-muted rounded-full mb-4">
+          <button
+            type="button"
+            onClick={() => { setSoundOnly(false); soundOnlyRef.current = false; }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              !soundOnly ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <Keyboard className="w-3.5 h-3.5" /> Typing + Sound
+          </button>
+          <button
+            type="button"
+            onClick={() => { setSoundOnly(true); soundOnlyRef.current = true; }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              soundOnly ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <Waves className="w-3.5 h-3.5" /> Sound Only
+          </button>
+        </div>
+      )}
+
+      {/* Timer */}
+      {isRecording && !meteringStarted && !soundOnly && (
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -311,10 +340,12 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className={`mt-4 text-2xl font-mono ${
-            30 - elapsedTime <= 5 ? "text-destructive" : "text-muted-foreground"
+            !soundOnly && 30 - elapsedTime <= 5 ? "text-destructive" : "text-muted-foreground"
           }`}
         >
-          {formatTime(Math.max(0, 30 - elapsedTime))}
+          {soundOnly
+            ? formatTime(elapsedTime)
+            : formatTime(Math.max(0, 30 - elapsedTime))}
         </motion.div>
       )}
 
@@ -323,8 +354,8 @@ export default function Home() {
         <WaveformVisualizer analyser={analyserNode} isRecording={meteringStarted} />
       </div>
 
-      {/* Typing test */}
-      {(isRecording || showSaveForm) && (
+      {/* Typing test (hidden in Sound Only mode) */}
+      {!soundOnly && (isRecording || showSaveForm) && (
         <div className="w-full mt-4">
           <TypingTest
             isRecording={isRecording}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Trophy, Crown, Medal, Volume2, ArrowUp, Clock } from "lucide-react";
+import { Trophy, Crown, Medal, Volume2, ArrowUp, Clock, Volume, VolumeX } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
@@ -15,20 +15,51 @@ const dbColor = (db) => {
   return "text-red-400";
 };
 
+// Derive a sound profile from decibel levels and switch type
+const soundProfile = (r) => {
+  const db = r.avg_decibels ?? 0;
+  const peak = r.peak_decibels ?? db;
+  const sw = (r.switch_type || "").toLowerCase();
+  const mods = (() => {
+    try { return JSON.parse(r.modifications || "[]"); } catch { return []; }
+  })();
+
+  // Clicky: explicit clicky switch and high peak
+  if (sw.includes("click") || sw.includes("blue") || sw.includes("white")) return "clicky";
+  // Creamy: lubed + filmed + low peak (very muted)
+  if (mods.includes("lubed") && mods.includes("filmed") && peak < 55) return "creamy";
+  // Thocky: low avg, deep sound (low peak relative to avg)
+  if (db < 45) return "thocky";
+  // Clacky: high avg, sharp sound
+  if (db >= 55 || peak >= 70) return "clacky";
+  // Default: thocky for mid-range, creamy for very quiet
+  return db < 50 ? "thocky" : "clacky";
+};
+
+const profileStyles = {
+  clacky: { label: "Clacky", className: "bg-orange-500/15 text-orange-400 border-orange-500/30", emoji: " clap" },
+  thocky: { label: "Thocky", className: "bg-purple-500/15 text-purple-400 border-purple-500/30", emoji: " thud" },
+  clicky: { label: "Clicky", className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30", emoji: " click" },
+  creamy: { label: "Creamy", className: "bg-pink-500/15 text-pink-400 border-pink-500/30", emoji: " smooth" },
+};
+
 export default function Rankings() {
   const { toast } = useToast();
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState("quietest"); // "quietest" | "loudest"
+
+  const sorted = [...recordings].sort((a, b) =>
+    sortOrder === "quietest"
+      ? a.avg_decibels - b.avg_decibels
+      : b.avg_decibels - a.avg_decibels
+  );
 
   useEffect(() => {
     const load = async () => {
       try {
         const data = await base44.entities.SoundRecording.list("-created_date", 200);
-        setRecordings(
-          data
-            .filter((r) => r.avg_decibels != null)
-            .sort((a, b) => a.avg_decibels - b.avg_decibels)
-        );
+        setRecordings(data.filter((r) => r.avg_decibels != null));
       } catch {
         toast({ title: "Failed to load", variant: "destructive" });
       } finally {
@@ -57,14 +88,39 @@ export default function Rankings() {
     );
   }
 
-  const winner = recordings[0];
+  const winner = sorted[0];
+  const isQuietest = sortOrder === "quietest";
 
   return (
     <div className="min-h-screen px-4 py-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight mb-1">Rankings</h1>
-      <p className="text-xs text-muted-foreground mb-6">
-        Lowest average decibels wins — the quietest keyboard is #1
+      <p className="text-xs text-muted-foreground mb-4">
+        {isQuietest
+          ? "Lowest average decibels wins — the quietest keyboard is #1"
+          : "Highest average decibels wins — the loudest keyboard is #1"}
       </p>
+
+      {/* Sort toggle */}
+      <div className="flex items-center gap-1 p-1 bg-muted rounded-full mb-6 w-fit">
+        <button
+          type="button"
+          onClick={() => setSortOrder("quietest")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            isQuietest ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          <VolumeX className="w-3.5 h-3.5" /> Quietest
+        </button>
+        <button
+          type="button"
+          onClick={() => setSortOrder("loudest")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            !isQuietest ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          <Volume className="w-3.5 h-3.5" /> Loudest
+        </button>
+      </div>
 
       {/* Winner spotlight */}
       <motion.div
@@ -75,9 +131,20 @@ export default function Rankings() {
         <div className="absolute top-3 right-3">
           <Crown className="w-7 h-7 text-yellow-400" />
         </div>
-        <p className="text-[10px] uppercase tracking-widest text-yellow-400/80 font-semibold mb-1">
-          🏆 Quietest keyboard
-        </p>
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-[10px] uppercase tracking-widest text-yellow-400/80 font-semibold">
+            🏆 {isQuietest ? "Quietest" : "Loudest"} keyboard
+          </p>
+          {(() => {
+            const profile = soundProfile(winner);
+            const style = profileStyles[profile];
+            return (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${style.className}`}>
+                {style.label}
+              </span>
+            );
+          })()}
+        </div>
         <h2 className="text-lg font-bold pr-10">{winner.name}</h2>
         <div className="flex items-center gap-4 mt-2 text-sm">
           <span className="flex items-center gap-1">
@@ -110,43 +177,52 @@ export default function Rankings() {
         Leaderboard
       </h3>
       <div className="space-y-2">
-        {recordings.map((r, i) => (
-          <motion.div
-            key={r.id}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: Math.min(i * 0.03, 0.4) }}
-            className={`flex items-center gap-3 rounded-xl border p-3 ${
-              i === 0
-                ? "border-yellow-500/40 bg-yellow-500/5"
-                : "border-border bg-card"
-            }`}
-          >
-            <div className="w-7 text-center">
-              {i < 3 ? (
-                <Medal className={`w-5 h-5 mx-auto ${medalColor[i]}`} />
-              ) : (
-                <span className="text-sm font-mono font-semibold text-muted-foreground">
-                  {i + 1}
-                </span>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-sm truncate">{r.name}</h4>
-              {r.duration_seconds > 0 && (
-                <p className="text-[10px] text-muted-foreground">{r.duration_seconds.toFixed(0)}s</p>
-              )}
-            </div>
-            <div className="text-right">
-              <p className={`font-mono font-bold text-sm ${dbColor(r.avg_decibels)}`}>
-                {r.avg_decibels.toFixed(1)} dB
-              </p>
-              {r.wpm > 0 && (
-                <p className="text-[10px] text-primary">{r.wpm} WPM</p>
-              )}
-            </div>
-          </motion.div>
-        ))}
+        {sorted.map((r, i) => {
+          const profile = soundProfile(r);
+          const style = profileStyles[profile];
+          return (
+            <motion.div
+              key={r.id}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: Math.min(i * 0.03, 0.4) }}
+              className={`flex items-center gap-3 rounded-xl border p-3 ${
+                i === 0
+                  ? "border-yellow-500/40 bg-yellow-500/5"
+                  : "border-border bg-card"
+              }`}
+            >
+              <div className="w-7 text-center">
+                {i < 3 ? (
+                  <Medal className={`w-5 h-5 mx-auto ${medalColor[i]}`} />
+                ) : (
+                  <span className="text-sm font-mono font-semibold text-muted-foreground">
+                    {i + 1}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-sm truncate">{r.name}</h4>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-medium shrink-0 ${style.className}`}>
+                    {style.label}
+                  </span>
+                </div>
+                {r.duration_seconds > 0 && (
+                  <p className="text-[10px] text-muted-foreground">{r.duration_seconds.toFixed(0)}s</p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className={`font-mono font-bold text-sm ${dbColor(r.avg_decibels)}`}>
+                  {r.avg_decibels.toFixed(1)} dB
+                </p>
+                {r.wpm > 0 && (
+                  <p className="text-[10px] text-primary">{r.wpm} WPM</p>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

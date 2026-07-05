@@ -4,6 +4,7 @@ import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import MobileSelect from "@/components/ui/mobile-select";
 import { useToast } from "@/components/ui/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -31,6 +32,15 @@ export default function Home() {
   const [accuracy, setAccuracy] = useState(100);
   const [soundOnly, setSoundOnly] = useState(false);
   const soundOnlyRef = useRef(false);
+  const [saveSwitchType, setSaveSwitchType] = useState("");
+  const [saveKeycapProfile, setSaveKeycapProfile] = useState("");
+  const [saveMods, setSaveMods] = useState({
+    o_rings_single: false,
+    o_rings_double: false,
+    lubed: false,
+    filmed: false,
+    tape_mod: false,
+  });
 
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
@@ -231,6 +241,15 @@ export default function Home() {
     setSaveName("");
     setSaveNotes("");
     setSaveCategory("other");
+    setSaveSwitchType("");
+    setSaveKeycapProfile("");
+    setSaveMods({
+      o_rings_single: false,
+      o_rings_double: false,
+      lubed: false,
+      filmed: false,
+      tape_mod: false,
+    });
     setMeteringStarted(false);
     meteringStartedRef.current = false;
   };
@@ -264,6 +283,11 @@ export default function Home() {
         duration_seconds: elapsedTime,
         notes: saveNotes.trim() || undefined,
         category: saveCategory,
+        switch_type: saveSwitchType.trim() || undefined,
+        keycap_profile: saveKeycapProfile || undefined,
+        modifications: JSON.stringify(
+          Object.entries(saveMods).filter(([, v]) => v).map(([k]) => k)
+        ) || undefined,
         decibel_samples: JSON.stringify(samplesRef.current.slice(0, 500)),
         wpm: wpm > 0 ? wpm : undefined,
         accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
@@ -467,6 +491,56 @@ export default function Home() {
                 { value: "other", label: "Other" },
               ]}
             />
+
+            {/* Switch type */}
+            <Input
+              placeholder="Switch type (e.g. Linear, Tactile, Clicky, Gateron Yellow)"
+              value={saveSwitchType}
+              onChange={(e) => setSaveSwitchType(e.target.value)}
+              className="bg-background"
+            />
+
+            {/* Keycap profile */}
+            <MobileSelect
+              value={saveKeycapProfile}
+              onValueChange={setSaveKeycapProfile}
+              placeholder="Keycap profile"
+              className="bg-background"
+              options={[
+                { value: "Cherry", label: "Cherry" },
+                { value: "OEM", label: "OEM" },
+                { value: "XVX", label: "XVX" },
+                { value: "MT3", label: "MT3" },
+                { value: "Other", label: "Other" },
+              ]}
+            />
+
+            {/* Modifications */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Modifications</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: "o_rings_single", label: "O-rings (Single)" },
+                  { key: "o_rings_double", label: "O-rings (Double)" },
+                  { key: "lubed", label: "Lubed" },
+                  { key: "filmed", label: "Filmed" },
+                  { key: "tape_mod", label: "Tape Mod" },
+                ].map((mod) => (
+                  <label
+                    key={mod.key}
+                    className="flex items-center gap-2 text-xs cursor-pointer rounded-md border border-border px-2.5 py-2 hover:bg-accent"
+                  >
+                    <Checkbox
+                      checked={saveMods[mod.key]}
+                      onCheckedChange={(v) =>
+                        setSaveMods((prev) => ({ ...prev, [mod.key]: !!v }))
+                      }
+                    />
+                    {mod.label}
+                  </label>
+                ))}
+              </div>
+            </div>
 
             <Textarea
               placeholder="Notes (optional)"

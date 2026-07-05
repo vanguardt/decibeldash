@@ -42,6 +42,27 @@
       "default": "other",
       "description": "Type of keyboard"
     },
+    "switch_type": {
+      "type": "string",
+      "description": "Switch type (e.g. Linear, Tactile, Clicky, or specific model)"
+    },
+    "keycap_profile": {
+      "type": "string",
+      "enum": [
+        "",
+        "Cherry",
+        "OEM",
+        "XVX",
+        "MT3",
+        "Other"
+      ],
+      "default": "",
+      "description": "Keycap profile used"
+    },
+    "modifications": {
+      "type": "string",
+      "description": "JSON string of applied modifications (o_rings, lubed, filmed, tape_mod)"
+    },
     "wpm": {
       "type": "number",
       "description": "Words per minute typed during recording"

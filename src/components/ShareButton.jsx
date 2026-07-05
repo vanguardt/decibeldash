@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Share2, X, Download, Clipboard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { makeStatsImage } from "@/lib/statsCard";
@@ -8,13 +8,15 @@ export default function ShareButton({ recording, className }) {
   const [imgBlob, setImgBlob] = useState(null);
   const [open, setOpen] = useState(false);
   const [imgUrl, setImgUrl] = useState(null);
+  const [imgError, setImgError] = useState(false);
+  const textAreaRef = useRef(null);
 
   // Pre-generate the stats card image so it's ready when the button is tapped.
   useEffect(() => {
     let cancelled = false;
     makeStatsImage(recording)
       .then((b) => { if (!cancelled) setImgBlob(b); })
-      .catch(() => {});
+      .catch(() => { if (!cancelled) setImgError(true); });
     return () => { cancelled = true; };
   }, [recording]);
 
@@ -58,21 +60,35 @@ export default function ShareButton({ recording, className }) {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
 
-  const copyImage = async () => {
-    if (!imgBlob) return;
-    if (navigator.clipboard && window.ClipboardItem) {
+  const handleCopy = async () => {
+    const text = buildText();
+    // Try image clipboard first (desktop with permission)
+    if (imgBlob && navigator.clipboard && window.ClipboardItem) {
       try {
         await navigator.clipboard.write([
           new ClipboardItem({
             "image/png": imgBlob,
-            "text/plain": new Blob([buildText()], { type: "text/plain" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
           }),
         ]);
         toast({ title: "Copied — paste into Discord" });
         return;
       } catch {}
     }
-    toast({ title: "Right-click the image → Copy", description: "Then paste into Discord." });
+    // Fall back to text-only clipboard (more permissive)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast({ title: "Stats text copied" });
+        return;
+      } catch {}
+    }
+    // Last resort: select the text for manual copy
+    if (textAreaRef.current) {
+      textAreaRef.current.select();
+      try { document.execCommand("copy"); toast({ title: "Copied!" }); return; } catch {}
+    }
+    toast({ title: "Select the text below to copy manually" });
   };
 
   const handleShare = (e) => {
@@ -121,18 +137,30 @@ export default function ShareButton({ recording, className }) {
 
             {imgUrl ? (
               <img src={imgUrl} alt="Recording stats" className="w-full rounded-lg" />
+            ) : imgError ? (
+              <div className="w-full aspect-[4/5] rounded-lg bg-muted flex items-center justify-center">
+                <p className="text-xs text-muted-foreground">Image unavailable</p>
+              </div>
             ) : (
               <div className="w-full aspect-[4/5] rounded-lg bg-muted animate-pulse" />
             )}
 
-            <p className="text-xs text-muted-foreground text-center mt-3 mb-3">
-              Long-press or right-click the image to save it, then paste into Discord.
+            <p className="text-xs text-muted-foreground text-center mt-3 mb-2">
+              Save the image or copy the stats text below.
             </p>
+
+            <textarea
+              ref={textAreaRef}
+              readOnly
+              value={buildText()}
+              className="w-full h-20 text-xs bg-background border border-input rounded-md p-2 resize-none font-mono cursor-text"
+              onClick={(e) => e.target.select()}
+            />
 
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={copyImage}
+                onClick={handleCopy}
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
               >
                 <Clipboard className="w-4 h-4" /> Copy

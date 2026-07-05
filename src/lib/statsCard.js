@@ -119,7 +119,10 @@ export function makeStatsImage(recording) {
         }
       };
       if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(finish).catch(finish);
+        Promise.race([
+          document.fonts.ready,
+          new Promise((r) => setTimeout(r, 1500)),
+        ]).then(finish).catch(finish);
       } else {
         finish();
       }

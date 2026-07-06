@@ -9,6 +9,7 @@ export const soundProfile = (r) => {
 
   if (sw.includes("click") || sw.includes("blue") || sw.includes("white")) return "clicky";
   if (mods.includes("lubed") && mods.includes("filmed") && peak < 55) return "creamy";
+  if (sw.includes("box") || sw.includes("pom") || sw.includes("ink")) return "marbly";
   if (db < 45) return "thocky";
   if (db >= 55 || peak >= 70) return "clacky";
   return db < 50 ? "thocky" : "clacky";
@@ -19,4 +20,5 @@ export const profileStyles = {
   thocky: { label: "Thocky", className: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
   clicky: { label: "Clicky", className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" },
   creamy: { label: "Creamy", className: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
+  marbly: { label: "Marbly", className: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
 };

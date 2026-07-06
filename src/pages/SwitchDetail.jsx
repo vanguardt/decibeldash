@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Star, Volume2, Gauge, Zap, Loader2, Plus, Pencil } from "lucide-react";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import SoundTestSubmit from "@/components/SoundTestSubmit";
+import FrequencySpectrum from "@/components/FrequencySpectrum";
 import AddSwitchForm from "@/components/AddSwitchForm";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -180,6 +181,11 @@ export default function SwitchDetail() {
                   )}
                 </div>
                 {test.audio_url && <RecordingAudioPlayer url={test.audio_url} />}
+                {test.audio_url && (
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <FrequencySpectrum audioUrl={test.audio_url} />
+                  </div>
+                )}
                 {test.notes && (
                   <p className="text-[10px] text-muted-foreground mt-2">{test.notes}</p>
                 )}

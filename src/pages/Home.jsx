@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes } from "lucide-react";
+import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import DecibelGauge from "@/components/DecibelGauge";
 import WaveformVisualizer from "@/components/WaveformVisualizer";
 import TypingTest from "@/components/TypingTest";
 import DecibelScale from "@/components/DecibelScale";
+import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 
 export default function Home() {
   const { toast } = useToast();
@@ -60,6 +61,7 @@ export default function Home() {
   const pendingUploadRef = useRef(null);
   const currentDbRef = useRef(0);
   const keyStatsRef = useRef({});
+  const [liveHeatmap, setLiveHeatmap] = useState({});
 
   const calculateDecibels = useCallback((analyser) => {
     const dataArray = new Float32Array(analyser.fftSize);
@@ -92,6 +94,7 @@ export default function Home() {
     stats.avg_db = stats.totalDb / stats.hits;
     if (db > stats.peak_db) stats.peak_db = db;
     keyStatsRef.current[char] = stats;
+    setLiveHeatmap({ ...keyStatsRef.current });
   }, []);
 
   const startRecording = async () => {
@@ -276,6 +279,7 @@ export default function Home() {
     setMeteringStarted(false);
     meteringStartedRef.current = false;
     keyStatsRef.current = {};
+    setLiveHeatmap({});
   };
 
   const saveRecording = async () => {
@@ -502,6 +506,16 @@ export default function Home() {
       {meteringStarted && (
         <div className="w-full mt-3 bg-card border border-border rounded-lg p-4">
           <DecibelScale db={currentDb} />
+        </div>
+      )}
+
+      {meteringStarted && !soundOnly && Object.keys(liveHeatmap).length > 0 && (
+        <div className="w-full mt-3 bg-card border border-border rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Grid3x3 className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-xs font-semibold">Live Key Heatmap</h3>
+          </div>
+          <KeyboardHeatmap recording={{ key_heatmap: JSON.stringify(liveHeatmap) }} />
         </div>
       )}
 

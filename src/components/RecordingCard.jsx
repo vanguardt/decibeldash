@@ -119,7 +119,7 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
 
       {/* Audio playback */}
       {recording.audio_url && (
-        <RecordingAudioPlayer url={recording.audio_url} />
+        <RecordingAudioPlayer url={recording.audio_url} onPlay={() => setShowHeatmap(true)} />
       )}
 
       {/* dB comparison scale */}

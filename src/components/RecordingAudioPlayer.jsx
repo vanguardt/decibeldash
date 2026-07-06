@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Play, Pause } from "lucide-react";
 
-export default function RecordingAudioPlayer({ url }) {
+export default function RecordingAudioPlayer({ url, onPlay }) {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef(null);
@@ -11,7 +11,7 @@ export default function RecordingAudioPlayer({ url }) {
     const audio = audioRef.current;
     if (!audio) return;
     if (playing) audio.pause();
-    else audio.play().catch(() => {});
+    else { audio.play().catch(() => {}); onPlay?.(); }
   };
 
   return (

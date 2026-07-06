@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
-import { Mic, List, GitCompare, Trophy, Settings as SettingsIcon } from "lucide-react";
+import { Mic, List, GitCompare, Trophy, Dices, Settings as SettingsIcon } from "lucide-react";
 import Header from "@/components/Header";
 
 const navItems = [
@@ -8,10 +8,11 @@ const navItems = [
   { path: "/recordings", icon: List, label: "Library" },
   { path: "/compare", icon: GitCompare, label: "Compare" },
   { path: "/rankings", icon: Trophy, label: "Ranks" },
+  { path: "/roulette", icon: Dices, label: "Roulette" },
   { path: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
-const keepAlivePaths = ["/", "/recordings", "/compare", "/rankings"];
+const keepAlivePaths = ["/", "/recordings", "/compare", "/rankings", "/roulette"];
 
 function KeepAliveOutlet() {
   const location = useLocation();

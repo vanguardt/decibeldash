@@ -74,11 +74,11 @@ export default function WaveformVisualizer({ analyser, isRecording }) {
     };
   }, [analyser, isRecording]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="w-full h-24 rounded-lg bg-background/50 hidden"
-      style={{ opacity: isRecording ? 1 : 0.3 }} />);
+  return null;
+
+
+
+
 
 
 }

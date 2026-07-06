@@ -493,11 +493,16 @@ export default function Home() {
             />
 
             {/* Switch type */}
-            <Input
-              placeholder="Switch type (e.g. Linear, Tactile, Clicky, Gateron Yellow)"
+            <MobileSelect
               value={saveSwitchType}
-              onChange={(e) => setSaveSwitchType(e.target.value)}
+              onValueChange={setSaveSwitchType}
+              placeholder="Switch type"
               className="bg-background"
+              options={[
+                { value: "Linear", label: "Linear" },
+                { value: "Tactile", label: "Tactile" },
+                { value: "Clicky", label: "Clicky" },
+              ]}
             />
 
             {/* Keycap profile */}

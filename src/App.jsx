@@ -70,6 +70,18 @@ function App() {
 
   return (
     <AuthProvider>
+    <footer
+  style={{
+    textAlign: "center",
+    padding: "12px",
+    fontSize: "0.85rem",
+    opacity: 0.6,
+    marginTop: "24px"
+  }}
+>
+  Made by Roger • DecibelDash
+</footer>
+
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />

@@ -9,6 +9,7 @@ export default function BuildProfiles() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("all");
+  const [switchFilter, setSwitchFilter] = useState("all");
 
   useEffect(() => {
     if (location.pathname !== "/builds") return;
@@ -27,26 +28,49 @@ export default function BuildProfiles() {
   }, [location.pathname]);
 
   const filtered = profiles.filter(
-    (p) => typeFilter === "all" || p.build_type === typeFilter
+    (p) =>
+      (typeFilter === "all" || p.build_type === typeFilter) &&
+      (switchFilter === "all" || (p.switch_type || "").toLowerCase() === switchFilter.toLowerCase())
   );
+
+  const availableSwitches = ["all", ...new Set(profiles.map((p) => p.switch_type).filter(Boolean))];
 
   return (
     <div className="min-h-screen px-4 py-6 max-w-lg mx-auto">
       {/* Filters */}
-      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
-        {["all", "Silent", "Gaming", "Thock", "Clack", "Custom"].map((t) => (
-          <button
-            key={t}
-            onClick={() => setTypeFilter(t)}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              typeFilter === t
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {t === "all" ? "All Builds" : t}
-          </button>
-        ))}
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {["all", "Silent", "Gaming", "Thock", "Clack", "Custom"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                typeFilter === t
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {t === "all" ? "All Builds" : t}
+            </button>
+          ))}
+        </div>
+        {availableSwitches.length > 1 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {availableSwitches.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSwitchFilter(s)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  switchFilter === s
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {s === "all" ? "All Switches" : s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (

@@ -79,7 +79,7 @@ function App() {
     marginTop: "24px"
   }}
 >
-  Made by Roger • DecibelDash
+  Made by R&R Gaming • DecibelDash
 </footer>
 
       <QueryClientProvider client={queryClientInstance}>

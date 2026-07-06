@@ -81,23 +81,39 @@ export default function ShareButton({ recording, className }) {
         return;
       } catch {}
     }
-    toast({ title: "Tap the text below to copy manually" });
+    toast({ title: "Press and hold the text to copy manually" });
   };
 
-  const handleShare = (e) => {
+  const handleShare = async (e) => {
     e.stopPropagation();
     const text = buildText();
-    // Mobile: native share sheet (Discord appears as a target)
+
+    // Try native share with image first (mobile), then text-only, then modal
     if (imgBlob) {
       const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-        navigator.share({ title: recording.name, text, files: [file] }).catch(() => {});
-        return;
+        try {
+          await navigator.share({ title: recording.name, text, files: [file] });
+          return; // shared successfully
+        } catch {
+          // cancelled or failed — fall through to modal
+        }
       }
     }
-    // Desktop / restricted iframe: show the card on screen to copy or save manually
+    // Text-only native share (more widely supported than files)
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: recording.name, text });
+        return;
+      } catch {
+        // cancelled or failed — fall through to modal
+      }
+    }
+    // Fallback: show modal for manual copy/download
     setOpen(true);
   };
+
+  const hasNativeShare = typeof navigator.share === "function";
 
   return (
     <>
@@ -158,6 +174,19 @@ export default function ShareButton({ recording, className }) {
               >
                 <Clipboard className="w-4 h-4" /> Copy
               </button>
+              {hasNativeShare && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await navigator.share({ title: recording.name, text: buildText() });
+                    } catch {}
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent"
+                >
+                  <Share2 className="w-4 h-4" /> Share
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => imgBlob && downloadBlob(imgBlob, `${safeName()}.png`)}

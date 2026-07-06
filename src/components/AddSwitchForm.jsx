@@ -11,7 +11,7 @@ export default function AddSwitchForm({ onClose, onCreated }) {
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [manufacturer, setManufacturer] = useState("");
-  const [switchType, setSwitchType] = useState("Linear");
+  const [switchTypeInput, setSwitchTypeInput] = useState("Linear");
   const [pitchProfile, setPitchProfile] = useState("Neutral");
   const [avgDb, setAvgDb] = useState("");
   const [peakDb, setPeakDb] = useState("");
@@ -30,7 +30,7 @@ export default function AddSwitchForm({ onClose, onCreated }) {
       const created = await base44.entities.SwitchEntry.create({
         name: name.trim(),
         manufacturer: manufacturer.trim() || undefined,
-        switch_type: switchType,
+        switch_type: switchTypeInput.trim() || "Linear",
         pitch_profile: pitchProfile,
         avg_decibels: avgDb ? parseFloat(avgDb) : undefined,
         peak_decibels: peakDb ? parseFloat(peakDb) : undefined,
@@ -68,16 +68,21 @@ export default function AddSwitchForm({ onClose, onCreated }) {
         <div className="space-y-3">
           <Input placeholder="Switch name *" value={name} onChange={(e) => setName(e.target.value)} />
           <Input placeholder="Manufacturer" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
-          <MobileSelect
-            value={switchType}
-            onValueChange={setSwitchType}
-            placeholder="Type"
-            options={[
-              { value: "Linear", label: "Linear" },
-              { value: "Tactile", label: "Tactile" },
-              { value: "Clicky", label: "Clicky" },
-            ]}
-          />
+          <div>
+            <Input
+              placeholder="Switch type (e.g. Linear, Tactile, Clicky...)"
+              value={switchTypeInput}
+              onChange={(e) => setSwitchTypeInput(e.target.value)}
+              list="switch-type-suggestions"
+            />
+            <datalist id="switch-type-suggestions">
+              <option value="Linear" />
+              <option value="Tactile" />
+              <option value="Clicky" />
+              <option value="Silent Linear" />
+              <option value="Silent Tactile" />
+            </datalist>
+          </div>
           <MobileSelect
             value={pitchProfile}
             onValueChange={setPitchProfile}

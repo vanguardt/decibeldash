@@ -12,12 +12,7 @@
     },
     "switch_type": {
       "type": "string",
-      "enum": [
-        "Linear",
-        "Tactile",
-        "Clicky"
-      ],
-      "description": "Switch type"
+      "description": "Switch type (e.g. Linear, Tactile, Clicky, or custom)"
     },
     "pitch_profile": {
       "type": "string",

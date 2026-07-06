@@ -1,0 +1,66 @@
+{
+  "name": "SwitchEntry",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Switch name (e.g. Cherry MX Red, Gateron Yellow, Zealios V2)"
+    },
+    "manufacturer": {
+      "type": "string",
+      "description": "Manufacturer (e.g. Cherry, Gateron, ZealPC, Kailh)"
+    },
+    "switch_type": {
+      "type": "string",
+      "enum": [
+        "Linear",
+        "Tactile",
+        "Clicky"
+      ],
+      "description": "Switch type"
+    },
+    "pitch_profile": {
+      "type": "string",
+      "enum": [
+        "Thocky",
+        "Clacky",
+        "Marbly",
+        "Creamy",
+        "High-pitched",
+        "Low-pitched",
+        "Neutral"
+      ],
+      "default": "Neutral",
+      "description": "Sound / pitch profile"
+    },
+    "avg_decibels": {
+      "type": "number",
+      "description": "Community average decibels"
+    },
+    "peak_decibels": {
+      "type": "number",
+      "description": "Community peak decibels"
+    },
+    "responsiveness_rating": {
+      "type": "number",
+      "description": "Responsiveness rating 1-5 (higher = snappier)"
+    },
+    "actuation_force": {
+      "type": "number",
+      "description": "Actuation force in grams (g)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the switch"
+    },
+    "sound_test_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of user-submitted sound tests"
+    }
+  },
+  "required": [
+    "name",
+    "switch_type"
+  ]
+}

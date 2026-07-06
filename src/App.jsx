@@ -12,6 +12,8 @@ import Recordings from '@/pages/Recordings';
 import Compare from '@/pages/Compare';
 import Rankings from '@/pages/Rankings';
 import SoundRoulette from '@/pages/SoundRoulette';
+import SwitchLibrary from '@/pages/SwitchLibrary';
+import SwitchDetail from '@/pages/SwitchDetail';
 import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
@@ -46,6 +48,8 @@ const AuthenticatedApp = () => {
         <Route path="/compare" element={<Compare />} />
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/roulette" element={<SoundRoulette />} />
+        <Route path="/switches" element={<SwitchLibrary />} />
+        <Route path="/switches/:id" element={<SwitchDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

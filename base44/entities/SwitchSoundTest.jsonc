@@ -1,0 +1,42 @@
+{
+  "name": "SwitchSoundTest",
+  "type": "object",
+  "properties": {
+    "switch_id": {
+      "type": "string",
+      "description": "Reference to SwitchEntry ID"
+    },
+    "switch_name": {
+      "type": "string",
+      "description": "Denormalized switch name for display"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "URL of the sound test audio file"
+    },
+    "avg_decibels": {
+      "type": "number",
+      "description": "Average dB measured during test"
+    },
+    "peak_decibels": {
+      "type": "number",
+      "description": "Peak dB measured during test"
+    },
+    "keyboard": {
+      "type": "string",
+      "description": "Keyboard used for the test"
+    },
+    "keycap_profile": {
+      "type": "string",
+      "description": "Keycap profile used"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the test setup"
+    }
+  },
+  "required": [
+    "switch_id",
+    "switch_name"
+  ]
+}

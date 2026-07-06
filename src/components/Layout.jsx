@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
-import { Mic, List, GitCompare, Trophy, Dices, Settings as SettingsIcon } from "lucide-react";
+import { Mic, List, GitCompare, Trophy, Dices, Layers, Settings as SettingsIcon } from "lucide-react";
 import Header from "@/components/Header";
 
 const navItems = [
   { path: "/", icon: Mic, label: "Record" },
   { path: "/recordings", icon: List, label: "Library" },
   { path: "/compare", icon: GitCompare, label: "Compare" },
+  { path: "/switches", icon: Layers, label: "Switches" },
   { path: "/rankings", icon: Trophy, label: "Ranks" },
   { path: "/roulette", icon: Dices, label: "Roulette" },
   { path: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
-const keepAlivePaths = ["/", "/recordings", "/compare", "/rankings", "/roulette"];
+const keepAlivePaths = ["/", "/recordings", "/compare", "/switches", "/rankings", "/roulette"];
 
 function KeepAliveOutlet() {
   const location = useLocation();
@@ -69,7 +70,7 @@ export default function Layout() {
               <Link
                 key={path}
                 to={path}
-                className={`flex flex-col items-center gap-0.5 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-lg transition-colors ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >

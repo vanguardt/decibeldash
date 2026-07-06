@@ -57,6 +57,18 @@ export default function TypingTest({
     newPassage();
   }, [newPassage]);
 
+  // Lock scroll + keep centered while the test is running
+  useEffect(() => {
+    if (!startTime || completed) return;
+    const el = containerRef.current;
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [startTime, completed]);
+
   // 30s countdown
   useEffect(() => {
     if (!startTime || completed) return;

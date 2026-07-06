@@ -467,6 +467,17 @@ export default function Home() {
         <WaveformVisualizer analyser={analyserNode} isRecording={meteringStarted} />
       </div>
 
+      {/* Live heatmap (above typing test so it's visible while typing) */}
+      {!soundOnly && meteringStarted && Object.keys(liveHeatmap).length > 0 && (
+        <div className="w-full mt-4 bg-card border border-border rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Grid3x3 className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-xs font-semibold">Live Key Heatmap</h3>
+          </div>
+          <KeyboardHeatmap recording={{ key_heatmap: JSON.stringify(liveHeatmap) }} />
+        </div>
+      )}
+
       {/* Typing test (hidden in Sound Only mode) */}
       {!soundOnly && (isRecording || showSaveForm) && (
         <div className="w-full mt-4">

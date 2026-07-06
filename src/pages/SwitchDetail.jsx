@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Star, Volume2, Gauge, Zap, Loader2, Plus } from "lucide-react";
+import { Star, Volume2, Gauge, Zap, Loader2, Plus, Pencil } from "lucide-react";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import SoundTestSubmit from "@/components/SoundTestSubmit";
+import AddSwitchForm from "@/components/AddSwitchForm";
+import { useAuth } from "@/lib/AuthContext";
 
 const TYPE_COLORS = {
   Linear: "bg-blue-500/15 text-blue-400",
@@ -27,6 +29,9 @@ export default function SwitchDetail() {
   const [soundTests, setSoundTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSubmit, setShowSubmit] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = async () => {
     try {
@@ -70,10 +75,20 @@ export default function SwitchDetail() {
   return (
     <div className="min-h-screen px-4 py-6 max-w-lg mx-auto">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl font-bold tracking-tight">{switchEntry.name}</h1>
-        {switchEntry.manufacturer && (
-          <p className="text-sm text-muted-foreground">{switchEntry.manufacturer}</p>
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight">{switchEntry.name}</h1>
+          {switchEntry.manufacturer && (
+            <p className="text-sm text-muted-foreground">{switchEntry.manufacturer}</p>
+          )}
+        </div>
+        {isAdmin && (
+          <button
+            onClick={() => setShowEdit(true)}
+            className="shrink-0 flex items-center gap-1 text-xs text-primary font-medium px-2.5 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5"
+          >
+            <Pencil className="w-3.5 h-3.5" /> Edit
+          </button>
         )}
       </div>
 
@@ -179,6 +194,14 @@ export default function SwitchDetail() {
           switchEntry={switchEntry}
           onClose={() => setShowSubmit(false)}
           onSubmitted={() => loadData()}
+        />
+      )}
+
+      {showEdit && (
+        <AddSwitchForm
+          editSwitch={switchEntry}
+          onClose={() => setShowEdit(false)}
+          onCreated={() => loadData()}
         />
       )}
     </div>

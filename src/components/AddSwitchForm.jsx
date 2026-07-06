@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import MobileSelect from "@/components/ui/mobile-select";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function AddSwitchForm({ onClose, onCreated }) {
+export default function AddSwitchForm({ onClose, onCreated, editSwitch }) {
   const { toast } = useToast();
+  const isEditing = !!editSwitch;
   const [name, setName] = useState("");
   const [manufacturer, setManufacturer] = useState("");
   const [switchTypeInput, setSwitchTypeInput] = useState("Linear");
@@ -20,6 +21,20 @@ export default function AddSwitchForm({ onClose, onCreated }) {
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (editSwitch) {
+      setName(editSwitch.name || "");
+      setManufacturer(editSwitch.manufacturer || "");
+      setSwitchTypeInput(editSwitch.switch_type || "Linear");
+      setPitchProfile(editSwitch.pitch_profile || "Neutral");
+      setAvgDb(editSwitch.avg_decibels != null ? String(editSwitch.avg_decibels) : "");
+      setPeakDb(editSwitch.peak_decibels != null ? String(editSwitch.peak_decibels) : "");
+      setRating(editSwitch.responsiveness_rating != null ? String(editSwitch.responsiveness_rating) : "");
+      setActuationForce(editSwitch.actuation_force != null ? String(editSwitch.actuation_force) : "");
+      setDescription(editSwitch.description || "");
+    }
+  }, [editSwitch]);
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast({ title: "Switch name is required", variant: "destructive" });
@@ -27,7 +42,7 @@ export default function AddSwitchForm({ onClose, onCreated }) {
     }
     setSaving(true);
     try {
-      const created = await base44.entities.SwitchEntry.create({
+      const payload = {
         name: name.trim(),
         manufacturer: manufacturer.trim() || undefined,
         switch_type: switchTypeInput.trim() || "Linear",
@@ -37,13 +52,21 @@ export default function AddSwitchForm({ onClose, onCreated }) {
         responsiveness_rating: rating ? parseFloat(rating) : undefined,
         actuation_force: actuationForce ? parseFloat(actuationForce) : undefined,
         description: description.trim() || undefined,
-        sound_test_count: 0,
-      });
-      toast({ title: "Switch added!" });
-      onCreated?.(created);
+      };
+
+      if (isEditing) {
+        const updated = await base44.entities.SwitchEntry.update(editSwitch.id, payload);
+        toast({ title: "Switch updated!" });
+        onCreated?.(updated);
+      } else {
+        payload.sound_test_count = 0;
+        const created = await base44.entities.SwitchEntry.create(payload);
+        toast({ title: "Switch added!" });
+        onCreated?.(created);
+      }
       onClose();
     } catch {
-      toast({ title: "Failed to add switch", variant: "destructive" });
+      toast({ title: isEditing ? "Failed to update switch" : "Failed to add switch", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -64,7 +87,7 @@ export default function AddSwitchForm({ onClose, onCreated }) {
         >
           <X className="w-4 h-4" />
         </button>
-        <h2 className="text-sm font-semibold mb-4">Add Switch</h2>
+        <h2 className="text-sm font-semibold mb-4">{isEditing ? "Edit Switch" : "Add Switch"}</h2>
         <div className="space-y-3">
           <Input placeholder="Switch name *" value={name} onChange={(e) => setName(e.target.value)} />
           <Input placeholder="Manufacturer" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
@@ -107,7 +130,7 @@ export default function AddSwitchForm({ onClose, onCreated }) {
           </div>
           <Textarea placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="resize-none" />
           <Button className="w-full" onClick={handleSubmit} disabled={saving}>
-            {saving ? "Saving..." : "Add Switch"}
+            {saving ? "Saving..." : isEditing ? "Save Changes" : "Add Switch"}
           </Button>
         </div>
       </div>

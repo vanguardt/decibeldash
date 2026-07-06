@@ -92,11 +92,12 @@ export default function TypingTest({
       onFirstKeystroke?.();
     }
 
-    // Report the newly typed character for per-key heatmap tracking
-    const native = e.nativeEvent;
-    if (native && native.inputType === "insertText" && native.data) {
-      for (const ch of native.data) {
-        onKeystroke?.(ch.toLowerCase());
+    // Report the newly typed character(s) for per-key heatmap tracking
+    const prev = typedRef.current || "";
+    if (value.length > prev.length) {
+      const added = value.slice(prev.length);
+      for (const ch of added) {
+        if (ch.trim()) onKeystroke?.(ch.toLowerCase());
       }
     }
 

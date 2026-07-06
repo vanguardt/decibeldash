@@ -87,15 +87,18 @@ export default function Home() {
   }, []);
 
   const handleKeystroke = useCallback((char) => {
-    const db = Math.max(currentDbRef.current, recentPeakRef.current);
-    if (db <= 35) return; // ignore if below noise gate
-    const stats = keyStatsRef.current[char] || { hits: 0, totalDb: 0, avg_db: 0, peak_db: 0 };
-    stats.hits++;
-    stats.totalDb += db;
-    stats.avg_db = stats.totalDb / stats.hits;
-    if (db > stats.peak_db) stats.peak_db = db;
-    keyStatsRef.current[char] = stats;
-    setLiveHeatmap({ ...keyStatsRef.current });
+    // Delay sampling so the keypress sound has time to reach the analyser
+    setTimeout(() => {
+      const db = Math.max(currentDbRef.current, recentPeakRef.current);
+      if (db <= 35) return; // ignore if below noise gate
+      const stats = keyStatsRef.current[char] || { hits: 0, totalDb: 0, avg_db: 0, peak_db: 0 };
+      stats.hits++;
+      stats.totalDb += db;
+      stats.avg_db = stats.totalDb / stats.hits;
+      if (db > stats.peak_db) stats.peak_db = db;
+      keyStatsRef.current[char] = stats;
+      setLiveHeatmap({ ...keyStatsRef.current });
+    }, 100);
   }, []);
 
   const startRecording = async () => {

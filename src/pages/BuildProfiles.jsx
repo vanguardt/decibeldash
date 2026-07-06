@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Mic } from "lucide-react";
 import BuildProfileCard from "@/components/BuildProfileCard";
 
 export default function BuildProfiles() {
+  const location = useLocation();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
+    if (location.pathname !== "/builds") return;
     const load = async () => {
+      setLoading(true);
       try {
         const data = await base44.entities.BuildProfile.list("-updated_date", 200);
         setProfiles(data);
@@ -21,7 +24,7 @@ export default function BuildProfiles() {
       }
     };
     load();
-  }, []);
+  }, [location.pathname]);
 
   const filtered = profiles.filter(
     (p) => typeFilter === "all" || p.build_type === typeFilter

@@ -344,7 +344,7 @@ export default function Home() {
               soundOnly ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
             }`}
           >
-            <Waves className="w-3.5 h-3.5" /> Sound Only
+            <Keyboard className="w-3.5 h-3.5" /> Keys Only
           </button>
         </div>
       )}

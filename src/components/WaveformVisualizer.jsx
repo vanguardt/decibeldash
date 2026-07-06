@@ -77,10 +77,10 @@ export default function WaveformVisualizer({ analyser, isRecording }) {
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-24 rounded-lg bg-background/50"
-      style={{ opacity: isRecording ? 1 : 0.3 }}
-    />
-  );
+      className="w-full h-24 rounded-lg bg-background/50 hidden"
+      style={{ opacity: isRecording ? 1 : 0.3 }} />);
+
+
 }
 
 function roundRectFill(ctx, x, y, w, h, r) {

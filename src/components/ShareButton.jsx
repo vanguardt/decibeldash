@@ -62,33 +62,26 @@ export default function ShareButton({ recording, className }) {
 
   const handleCopy = async () => {
     const text = buildText();
-    // Try image clipboard first (desktop with permission)
-    if (imgBlob && navigator.clipboard && window.ClipboardItem) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "image/png": imgBlob,
-            "text/plain": new Blob([text], { type: "text/plain" }),
-          }),
-        ]);
-        toast({ title: "Copied — paste into Discord" });
-        return;
-      } catch {}
-    }
-    // Fall back to text-only clipboard (more permissive)
+    // Text clipboard — most widely supported across browsers
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(text);
-        toast({ title: "Stats text copied" });
+        toast({ title: "Stats copied — paste anywhere" });
         return;
       } catch {}
     }
-    // Last resort: select the text for manual copy
+    // Fallback: select + execCommand for older/restricted browsers
     if (textAreaRef.current) {
+      textAreaRef.current.focus();
       textAreaRef.current.select();
-      try { document.execCommand("copy"); toast({ title: "Copied!" }); return; } catch {}
+      textAreaRef.current.setSelectionRange(0, text.length);
+      try {
+        document.execCommand("copy");
+        toast({ title: "Stats copied!" });
+        return;
+      } catch {}
     }
-    toast({ title: "Select the text below to copy manually" });
+    toast({ title: "Tap the text below to copy manually" });
   };
 
   const handleShare = (e) => {

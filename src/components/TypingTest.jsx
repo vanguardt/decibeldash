@@ -16,6 +16,7 @@ export default function TypingTest({
   onWpmUpdate,
   onFirstKeystroke,
   onComplete,
+  onKeystroke,
 }) {
   const [passage, setPassage] = useState("");
   const [typed, setTyped] = useState("");
@@ -89,6 +90,14 @@ export default function TypingTest({
       startTimeRef.current = now;
       setStartTime(now);
       onFirstKeystroke?.();
+    }
+
+    // Report the newly typed character for per-key heatmap tracking
+    const native = e.nativeEvent;
+    if (native && native.inputType === "insertText" && native.data) {
+      for (const ch of native.data) {
+        onKeystroke?.(ch.toLowerCase());
+      }
     }
 
     setTyped(value);

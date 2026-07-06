@@ -6,12 +6,16 @@ import { motion } from "framer-motion";
 import RecordingCard from "@/components/RecordingCard";
 import ComparisonChart from "@/components/ComparisonChart";
 import AudioUploader from "@/components/AudioUploader";
+import ModComparison from "@/components/ModComparison";
 
 export default function Compare() {
   const { toast } = useToast();
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState([]);
+  const [mode, setMode] = useState("chart");
+  const [beforeId, setBeforeId] = useState("");
+  const [afterId, setAfterId] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -34,13 +38,39 @@ export default function Compare() {
   };
 
   const selectedRecordings = recordings.filter((r) => selected.includes(r.id));
+  const beforeRecording = recordings.find((r) => r.id === beforeId);
+  const afterRecording = recordings.find((r) => r.id === afterId);
 
   return (
     <div className="min-h-screen px-4 py-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight mb-1">Compare</h1>
-      <p className="text-xs text-muted-foreground mb-6">
-        Select 2–6 recordings to compare side by side
+      <p className="text-xs text-muted-foreground mb-4">
+        {mode === "chart"
+          ? "Select 2–6 recordings to compare side by side"
+          : "Pick a before and after recording to see mod impact"}
       </p>
+
+      {/* Mode toggle */}
+      <div className="flex items-center gap-1 p-1 bg-muted rounded-full mb-6">
+        <button
+          type="button"
+          onClick={() => setMode("chart")}
+          className={`flex-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            mode === "chart" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          Chart Compare
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("beforeafter")}
+          className={`flex-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            mode === "beforeafter" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+          }`}
+        >
+          Before / After
+        </button>
+      </div>
 
       <AudioUploader onUploaded={(r) => setRecordings((prev) => [r, ...prev])} />
 
@@ -57,37 +87,91 @@ export default function Compare() {
         </div>
       ) : (
         <>
-          {/* Selection count */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full">
-              <Check className="w-3 h-3" />
-              {selected.length} selected
-            </div>
-            {selected.length > 0 && (
-              <button
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setSelected([])}
-              >
-                Clear
-              </button>
-            )}
-          </div>
+          {mode === "chart" && (
+            <>
+              {/* Selection count */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full">
+                  <Check className="w-3 h-3" />
+                  {selected.length} selected
+                </div>
+                {selected.length > 0 && (
+                  <button
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setSelected([])}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
 
-          {/* Comparison chart */}
-          {selectedRecordings.length >= 2 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-8"
-            >
-              <ComparisonChart recordings={selectedRecordings} />
-            </motion.div>
+              {/* Comparison chart */}
+              {selectedRecordings.length >= 2 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-8"
+                >
+                  <ComparisonChart recordings={selectedRecordings} />
+                </motion.div>
+              )}
+
+              {selectedRecordings.length === 1 && (
+                <div className="bg-card border border-border rounded-xl p-6 text-center mb-8">
+                  <p className="text-sm text-muted-foreground">Select at least one more recording to compare</p>
+                </div>
+              )}
+            </>
           )}
 
-          {selectedRecordings.length === 1 && (
-            <div className="bg-card border border-border rounded-xl p-6 text-center mb-8">
-              <p className="text-sm text-muted-foreground">Select at least one more recording to compare</p>
-            </div>
+          {mode === "beforeafter" && (
+            <>
+              {/* Before/After selectors */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">Before</label>
+                  <select
+                    value={beforeId}
+                    onChange={(e) => setBeforeId(e.target.value)}
+                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="">Select…</option>
+                    {recordings.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block">After</label>
+                  <select
+                    value={afterId}
+                    onChange={(e) => setAfterId(e.target.value)}
+                    className="w-full bg-background border border-input rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="">Select…</option>
+                    {recordings.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {beforeRecording && afterRecording && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-8"
+                >
+                  <ModComparison before={beforeRecording} after={afterRecording} />
+                </motion.div>
+              )}
+
+              {(!beforeRecording || !afterRecording) && (beforeId || afterId) && (
+                <div className="bg-card border border-border rounded-xl p-6 text-center mb-8">
+                  <p className="text-sm text-muted-foreground">Select both a before and after recording</p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Recordings to pick from */}

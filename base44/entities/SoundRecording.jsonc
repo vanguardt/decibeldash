@@ -78,6 +78,10 @@
     "audio_url": {
       "type": "string",
       "description": "URL of the recorded audio file for playback"
+    },
+    "key_heatmap": {
+      "type": "string",
+      "description": "JSON string of per-key dB stats: { key: { hits, avg_db, peak_db } }"
     }
   },
   "required": [

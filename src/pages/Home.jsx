@@ -57,6 +57,8 @@ export default function Home() {
   const audioChunksRef = useRef([]);
   const audioUrlRef = useRef(null);
   const pendingUploadRef = useRef(null);
+  const currentDbRef = useRef(0);
+  const keyStatsRef = useRef({});
 
   const calculateDecibels = useCallback((analyser) => {
     const dataArray = new Float32Array(analyser.fftSize);
@@ -78,6 +80,17 @@ export default function Home() {
     let db = 40 + 20 * Math.log10(rms / NOISE_GATE);
 
     return Math.max(35, Math.min(95, db));
+  }, []);
+
+  const handleKeystroke = useCallback((char) => {
+    const db = currentDbRef.current;
+    if (db <= 35) return; // ignore if below noise gate
+    const stats = keyStatsRef.current[char] || { hits: 0, totalDb: 0, avg_db: 0, peak_db: 0 };
+    stats.hits++;
+    stats.totalDb += db;
+    stats.avg_db = stats.totalDb / stats.hits;
+    if (db > stats.peak_db) stats.peak_db = db;
+    keyStatsRef.current[char] = stats;
   }, []);
 
   const startRecording = async () => {
@@ -118,6 +131,8 @@ export default function Home() {
       audioChunksRef.current = [];
       audioUrlRef.current = null;
       pendingUploadRef.current = null;
+      currentDbRef.current = 0;
+      keyStatsRef.current = {};
       setIsRecording(true);
       setPermissionDenied(false);
       // In Sound Only mode, metering starts immediately
@@ -179,6 +194,7 @@ export default function Home() {
     const meter = () => {
       const db = calculateDecibels(analyser);
       setCurrentDb(db);
+      currentDbRef.current = db;
 
       // Only track keyboard sounds above the noise gate
       if (db > 35) {
@@ -257,6 +273,7 @@ export default function Home() {
     });
     setMeteringStarted(false);
     meteringStartedRef.current = false;
+    keyStatsRef.current = {};
   };
 
   const saveRecording = async () => {
@@ -298,6 +315,9 @@ export default function Home() {
         accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
         total_words: wpm > 0 ? Math.round((elapsedTime / 60) * wpm) : undefined,
         audio_url: audioUrl || undefined,
+        key_heatmap: Object.keys(keyStatsRef.current).length > 0
+          ? JSON.stringify(keyStatsRef.current)
+          : undefined,
       });
     } catch (err) {
       toast({ title: "Failed to save", variant: "destructive" });
@@ -390,6 +410,7 @@ export default function Home() {
             isRecording={isRecording}
             onFirstKeystroke={beginMetering}
             onComplete={stopRecording}
+            onKeystroke={handleKeystroke}
             onWpmUpdate={(newWpm, acc) => {
               setWpm(newWpm);
               setAccuracy(acc);

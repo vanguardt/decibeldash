@@ -1,5 +1,5 @@
-import React from "react";
-import { Trash2, Volume2, Clock, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import React, { useState } from "react";
+import { Trash2, Volume2, Clock, ArrowUp, ArrowDown, Minus, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -7,6 +7,7 @@ import ShareButton from "@/components/ShareButton";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import AudioDownloadButton from "@/components/AudioDownloadButton";
 import DecibelScale from "@/components/DecibelScale";
+import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -17,6 +18,7 @@ const categoryColors = {
 };
 
 export default function RecordingCard({ recording, onDelete, selected, onSelect }) {
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const getColor = (db) => {
     if (db < 30) return "text-green-400";
     if (db < 50) return "text-emerald-400";
@@ -82,6 +84,21 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {recording.key_heatmap && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowHeatmap(!showHeatmap);
+              }}
+              className={`flex items-center justify-center h-7 w-7 rounded-md transition-colors shrink-0 ${
+                showHeatmap ? "text-primary bg-accent" : "text-muted-foreground hover:text-primary hover:bg-accent"
+              }`}
+              aria-label="Toggle heatmap"
+            >
+              <Grid3x3 className="w-3.5 h-3.5" />
+            </button>
+          )}
           <ShareButton recording={recording} />
           {recording.audio_url && (
             <AudioDownloadButton url={recording.audio_url} name={recording.name} />
@@ -108,6 +125,13 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
       {/* dB comparison scale */}
       {recording.avg_decibels != null && (
         <DecibelScale db={recording.avg_decibels} className="mt-3" />
+      )}
+
+      {/* Per-key heatmap */}
+      {showHeatmap && recording.key_heatmap && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <KeyboardHeatmap recording={recording} />
+        </div>
       )}
     </motion.div>
   );

@@ -7,12 +7,22 @@ const KEYBOARD_ROWS = [
   ["z", "x", "c", "v", "b", "n", "m", ",", "."],
 ];
 
-function getKeyColor(db) {
-  if (db == null) return "bg-muted/40 text-muted-foreground/40 border-transparent";
-  if (db < 52) return "bg-green-500/25 text-green-300 border-green-500/30";
-  if (db < 62) return "bg-yellow-500/25 text-yellow-300 border-yellow-500/30";
-  if (db < 73) return "bg-orange-500/25 text-orange-300 border-orange-500/30";
-  return "bg-red-500/25 text-red-300 border-red-500/30";
+function getKeyStyle(db, minDb, maxDb) {
+  if (db == null)
+    return {
+      backgroundColor: "rgba(100,116,139,0.12)",
+      color: "rgba(148,163,184,0.4)",
+      borderColor: "transparent",
+    };
+  const range = maxDb - minDb || 1;
+  const ratio = Math.max(0, Math.min(1, (db - minDb) / range));
+  // Hue: 220 (blue) → 50 (yellow)
+  const hue = 220 - ratio * 170;
+  return {
+    backgroundColor: `hsla(${hue}, 75%, 50%, 0.2)`,
+    color: `hsl(${hue}, 80%, 68%)`,
+    borderColor: `hsla(${hue}, 75%, 50%, 0.3)`,
+  };
 }
 
 export default function KeyboardHeatmap({ recording }) {
@@ -41,12 +51,15 @@ export default function KeyboardHeatmap({ recording }) {
   const quietestKey = keysWithData.reduce((a, b) =>
     heatmap[a].avg_db < heatmap[b].avg_db ? a : b
   );
+  const maxDb = heatmap[hottestKey].avg_db;
+  const minDb = heatmap[quietestKey].avg_db;
 
   const renderKey = (key) => {
     const stats = heatmap[key];
     const hasHit = stats && stats.hits > 0;
     const db = hasHit ? stats.avg_db : null;
     const isSelected = selectedKey === key;
+    const keyStyle = getKeyStyle(db, minDb, maxDb);
 
     return (
       <button
@@ -57,9 +70,9 @@ export default function KeyboardHeatmap({ recording }) {
           setSelectedKey(isSelected ? null : key);
         }}
         className={`relative flex flex-col items-center justify-center rounded-md border transition-all ${
-          getKeyColor(db)
-        } ${isSelected ? "ring-2 ring-primary scale-105 z-10" : ""} h-9`}
-        style={{ minWidth: key === " " ? "60%" : "28px", flex: key === " " ? "1" : "0 0 auto" }}
+          isSelected ? "ring-2 ring-primary scale-105 z-10" : ""
+        } h-9`}
+        style={{ minWidth: key === " " ? "60%" : "28px", flex: key === " " ? "1" : "0 0 auto", ...keyStyle }}
       >
         <span className="text-[10px] font-bold uppercase leading-none">
           {key === " " ? "Space" : key}
@@ -123,18 +136,13 @@ export default function KeyboardHeatmap({ recording }) {
       )}
 
       {/* Legend */}
-      <div className="flex items-center gap-2 flex-wrap mb-3">
-        {[
-          { label: "Quiet", color: "bg-green-500/40", range: "<52" },
-          { label: "Moderate", color: "bg-yellow-500/40", range: "52-62" },
-          { label: "Loud", color: "bg-orange-500/40", range: "62-73" },
-          { label: "Very Loud", color: "bg-red-500/40", range: "73+" },
-        ].map((z) => (
-          <div key={z.label} className="flex items-center gap-1">
-            <div className={`w-2.5 h-2.5 rounded-sm ${z.color}`} />
-            <span className="text-[9px] text-muted-foreground">{z.label}</span>
-          </div>
-        ))}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[9px] text-muted-foreground">{minDb.toFixed(0)} dB</span>
+        <div
+          className="flex-1 h-2 rounded-full"
+          style={{ background: "linear-gradient(to right, hsl(220,75%,50%), hsl(135,75%,50%), hsl(50,75%,50%))" }}
+        />
+        <span className="text-[9px] text-muted-foreground">{maxDb.toFixed(0)} dB</span>
       </div>
 
       {/* Highlights */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
-import { Mic, List, GitCompare, Trophy, Dices, Layers, Settings as SettingsIcon } from "lucide-react";
+import { Mic, List, GitCompare, Trophy, Dices, Layers, Boxes, Settings as SettingsIcon } from "lucide-react";
 import Header from "@/components/Header";
 
 const navItems = [
@@ -8,12 +8,13 @@ const navItems = [
   { path: "/recordings", icon: List, label: "Library" },
   { path: "/compare", icon: GitCompare, label: "Compare" },
   { path: "/switches", icon: Layers, label: "Switches" },
+  { path: "/builds", icon: Boxes, label: "Builds" },
   { path: "/rankings", icon: Trophy, label: "Ranks" },
   { path: "/roulette", icon: Dices, label: "Roulette" },
   { path: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
-const keepAlivePaths = ["/", "/recordings", "/compare", "/switches", "/rankings", "/roulette"];
+const keepAlivePaths = ["/", "/recordings", "/compare", "/switches", "/builds", "/rankings", "/roulette"];
 
 function KeepAliveOutlet() {
   const location = useLocation();
@@ -63,14 +64,14 @@ export default function Layout() {
         className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border z-50"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="max-w-lg mx-auto flex items-center justify-around h-16">
+        <div className="max-w-lg mx-auto flex items-center h-16 overflow-x-auto scrollbar-hide">
           {navItems.map(({ path, icon: Icon, label }) => {
             const active = pathname === path;
             return (
               <Link
                 key={path}
                 to={path}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-lg transition-colors ${
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-lg transition-colors shrink-0 ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >

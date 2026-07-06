@@ -14,6 +14,8 @@ import Rankings from '@/pages/Rankings';
 import SoundRoulette from '@/pages/SoundRoulette';
 import SwitchLibrary from '@/pages/SwitchLibrary';
 import SwitchDetail from '@/pages/SwitchDetail';
+import BuildProfiles from '@/pages/BuildProfiles';
+import BuildProfileDetail from '@/pages/BuildProfileDetail';
 import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
@@ -50,6 +52,8 @@ const AuthenticatedApp = () => {
         <Route path="/roulette" element={<SoundRoulette />} />
         <Route path="/switches" element={<SwitchLibrary />} />
         <Route path="/switches/:id" element={<SwitchDetail />} />
+        <Route path="/builds" element={<BuildProfiles />} />
+        <Route path="/builds/:id" element={<BuildProfileDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

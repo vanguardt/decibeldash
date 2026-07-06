@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves } from "lucide-react";
+import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,7 @@ export default function Home() {
     filmed: false,
     tape_mod: false,
   });
+  const [saveBuildType, setSaveBuildType] = useState("Custom");
 
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
@@ -271,6 +272,7 @@ export default function Home() {
       filmed: false,
       tape_mod: false,
     });
+    setSaveBuildType("Custom");
     setMeteringStarted(false);
     meteringStartedRef.current = false;
     keyStatsRef.current = {};
@@ -321,6 +323,54 @@ export default function Home() {
       });
     } catch (err) {
       toast({ title: "Failed to save", variant: "destructive" });
+    }
+  };
+
+  const saveAsBuild = async () => {
+    if (!saveName.trim()) {
+      toast({ title: "Please enter a name", variant: "destructive" });
+      return;
+    }
+
+    const avgDb = samplesRef.current.length > 0
+      ? samplesRef.current.reduce((s, sample) => s + sample.db, 0) / samplesRef.current.length
+      : currentDb;
+
+    const heatmap = { ...keyStatsRef.current };
+    const uploadPromise = pendingUploadRef.current;
+
+    resetRecording();
+    toast({ title: "Build profile saved!" });
+
+    let audioUrl = null;
+    if (uploadPromise) {
+      try { audioUrl = await uploadPromise; } catch { audioUrl = null; }
+    }
+
+    try {
+      await base44.entities.BuildProfile.create({
+        name: saveName.trim(),
+        build_type: saveBuildType,
+        avg_decibels: Math.round(avgDb * 10) / 10,
+        peak_decibels: Math.round(peakRef.current * 10) / 10,
+        min_decibels: minRef.current === Infinity ? 0 : Math.round(minRef.current * 10) / 10,
+        duration_seconds: elapsedTime,
+        notes: saveNotes.trim() || undefined,
+        switch_type: saveSwitchType.trim() || undefined,
+        keycap_profile: saveKeycapProfile || undefined,
+        modifications: JSON.stringify(
+          Object.entries(saveMods).filter(([, v]) => v).map(([k]) => k)
+        ) || undefined,
+        decibel_samples: JSON.stringify(samplesRef.current.slice(0, 500)),
+        wpm: wpm > 0 ? wpm : undefined,
+        accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
+        audio_url: audioUrl || undefined,
+        key_heatmap: Object.keys(heatmap).length > 0
+          ? JSON.stringify(heatmap)
+          : undefined,
+      });
+    } catch (err) {
+      toast({ title: "Failed to save build", variant: "destructive" });
     }
   };
 
@@ -600,6 +650,27 @@ export default function Home() {
               </Button>
               <Button variant="outline" onClick={resetRecording}>
                 Discard
+              </Button>
+            </div>
+
+            <div className="pt-3 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Build Profile</p>
+              <MobileSelect
+                value={saveBuildType}
+                onValueChange={setSaveBuildType}
+                placeholder="Build type"
+                className="bg-background mb-2"
+                options={[
+                  { value: "Silent", label: "Silent Build" },
+                  { value: "Gaming", label: "Gaming Build" },
+                  { value: "Thock", label: "Thock Build" },
+                  { value: "Clack", label: "Clack Build" },
+                  { value: "Custom", label: "Custom" },
+                ]}
+              />
+              <Button variant="secondary" className="w-full" onClick={saveAsBuild}>
+                <Boxes className="w-4 h-4 mr-2" />
+                Save as Build Profile
               </Button>
             </div>
           </motion.div>

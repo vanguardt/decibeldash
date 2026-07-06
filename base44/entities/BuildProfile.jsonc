@@ -1,0 +1,78 @@
+{
+  "name": "BuildProfile",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Build profile name (e.g. Silent Build, Gaming Build)"
+    },
+    "build_type": {
+      "type": "string",
+      "enum": [
+        "Silent",
+        "Gaming",
+        "Thock",
+        "Clack",
+        "Custom"
+      ],
+      "default": "Custom",
+      "description": "Build type category"
+    },
+    "switch_type": {
+      "type": "string",
+      "description": "Switch type used in the build"
+    },
+    "keycap_profile": {
+      "type": "string",
+      "description": "Keycap profile used"
+    },
+    "modifications": {
+      "type": "string",
+      "description": "JSON string of applied modifications"
+    },
+    "avg_decibels": {
+      "type": "number",
+      "description": "Average decibel level recorded"
+    },
+    "peak_decibels": {
+      "type": "number",
+      "description": "Peak decibel level recorded"
+    },
+    "min_decibels": {
+      "type": "number",
+      "description": "Minimum decibel level recorded"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Duration of the recording in seconds"
+    },
+    "wpm": {
+      "type": "number",
+      "description": "Words per minute typed during recording"
+    },
+    "accuracy": {
+      "type": "number",
+      "description": "Typing accuracy percentage"
+    },
+    "audio_url": {
+      "type": "string",
+      "description": "URL of the recorded audio file"
+    },
+    "decibel_samples": {
+      "type": "string",
+      "description": "JSON string of decibel samples over time"
+    },
+    "key_heatmap": {
+      "type": "string",
+      "description": "JSON string of per-key dB stats"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about the build"
+    }
+  },
+  "required": [
+    "name",
+    "build_type"
+  ]
+}

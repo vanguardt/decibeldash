@@ -9,6 +9,7 @@ const titles = {
   "/rankings": "Rankings",
   "/roulette": "Sound Roulette",
   "/switches": "Switches",
+  "/builds": "Build Profiles",
   "/settings": "Settings",
 };
 

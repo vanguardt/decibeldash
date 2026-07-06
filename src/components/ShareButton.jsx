@@ -84,39 +84,33 @@ export default function ShareButton({ recording, className }) {
     toast({ title: "Press and hold the text to copy manually" });
   };
 
-  // Only use native share on touch/mobile devices — desktop browsers have
-  // navigator.share but it opens a poor/unusable dialog, so skip straight
-  // to the modal there.
-  const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-
-  const handleShare = async (e) => {
+  // Always open the modal. Auto-triggering navigator.share() fails
+  // silently on touchscreen laptops and some browsers, so we let the
+  // user tap a Share button inside the modal instead.
+  const handleShare = (e) => {
     e.stopPropagation();
-    const text = buildText();
+    setOpen(true);
+  };
 
-    if (isTouchDevice) {
-      // Try file share first, then text-only
-      if (imgBlob) {
-        const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
-        if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ title: recording.name, text, files: [file] });
-            return;
-          } catch {}
-        }
-      }
-      if (typeof navigator.share === "function") {
+  const hasNativeShare = typeof navigator.share === "function";
+
+  const handleNativeShare = async () => {
+    const text = buildText();
+    if (imgBlob && typeof navigator.canShare === "function") {
+      const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({ title: recording.name, text });
+          await navigator.share({ title: recording.name, text, files: [file] });
           return;
         } catch {}
       }
     }
-
-    // Desktop or native share unavailable: show modal
-    setOpen(true);
+    if (hasNativeShare) {
+      try {
+        await navigator.share({ title: recording.name, text });
+      } catch {}
+    }
   };
-
-  const hasNativeShare = isTouchDevice && typeof navigator.share === "function";
 
   return (
     <>
@@ -180,11 +174,7 @@ export default function ShareButton({ recording, className }) {
               {hasNativeShare && (
                 <button
                   type="button"
-                  onClick={async () => {
-                    try {
-                      await navigator.share({ title: recording.name, text: buildText() });
-                    } catch {}
-                  }}
+                  onClick={handleNativeShare}
                   className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent"
                 >
                   <Share2 className="w-4 h-4" /> Share

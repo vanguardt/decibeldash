@@ -164,7 +164,7 @@ export default function TypingTest({
       <div
         className="text-sm leading-relaxed font-mono mb-3 select-none"
         onClick={() =>
-          isRecording && !completed && inputRef.current?.focus()
+          isRecording && !completed && inputRef.current?.focus({ preventScroll: true })
         }
       >
         {passage.split("").map((char, i) => {

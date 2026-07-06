@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import DecibelGauge from "@/components/DecibelGauge";
 import WaveformVisualizer from "@/components/WaveformVisualizer";
 import TypingTest from "@/components/TypingTest";
+import DecibelScale from "@/components/DecibelScale";
 
 export default function Home() {
   const { toast } = useToast();
@@ -67,15 +68,16 @@ export default function Home() {
     }
     const rms = Math.sqrt(sumSquares / dataArray.length);
 
-    // Convert to decibels, calibrated for keyboard-level sounds
-    // Adding offset to better represent ambient/keyboard noise levels
-    let db = 20 * Math.log10(rms + 0.0000001);
-    // Map the -90 to 0 range into roughly 20-80 dB SPL range for keyboard sounds
-    db = Math.max(0, db + 90);
-    // Scale to more realistic dB SPL approximation
-    db = (db / 90) * 70 + 15;
+    // Noise gate: ignore ambient background noise below threshold.
+    // Only sounds above the gate (actual keypresses) register on the meter.
+    const NOISE_GATE = 0.005;
+    if (rms < NOISE_GATE) return 35;
 
-    return Math.max(0, Math.min(120, db));
+    // Calibrated dB SPL mapping for keyboard sounds:
+    // ~40 dB: silent switches · ~55 dB: tactile · ~66 dB: clicky · 76+: very loud
+    let db = 40 + 20 * Math.log10(rms / NOISE_GATE);
+
+    return Math.max(35, Math.min(95, db));
   }, []);
 
   const startRecording = async () => {
@@ -178,20 +180,23 @@ export default function Home() {
       const db = calculateDecibels(analyser);
       setCurrentDb(db);
 
-      if (db > peakRef.current) {
-        peakRef.current = db;
-        setPeakDb(db);
-      }
-      if (db < minRef.current && db > 5) {
-        minRef.current = db;
-        setMinDb(db);
-      }
+      // Only track keyboard sounds above the noise gate
+      if (db > 35) {
+        if (db > peakRef.current) {
+          peakRef.current = db;
+          setPeakDb(db);
+        }
+        if (db < minRef.current) {
+          minRef.current = db;
+          setMinDb(db);
+        }
 
-      // Sample every 200ms
-      const now = Date.now();
-      const lastSample = samplesRef.current[samplesRef.current.length - 1];
-      if (!lastSample || now - lastSample.t > 200) {
-        samplesRef.current.push({ t: now - startTimeRef.current, db });
+        // Sample every 200ms
+        const now = Date.now();
+        const lastSample = samplesRef.current[samplesRef.current.length - 1];
+        if (!lastSample || now - lastSample.t > 200) {
+          samplesRef.current.push({ t: now - startTimeRef.current, db });
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(meter);
@@ -423,6 +428,12 @@ export default function Home() {
         </motion.div>
       )}
 
+      {meteringStarted && (
+        <div className="w-full mt-3 bg-card border border-border rounded-lg p-4">
+          <DecibelScale db={currentDb} />
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex items-center gap-3 mt-8">
         {!isRecording && !showSaveForm && (
@@ -470,6 +481,12 @@ export default function Home() {
             className="w-full mt-6 bg-card border border-border rounded-xl p-5 space-y-4"
           >
             <h2 className="text-sm font-semibold">Save Recording</h2>
+
+            {samples.length > 0 && (
+              <DecibelScale
+                db={samples.reduce((s, sm) => s + sm.db, 0) / samples.length}
+              />
+            )}
 
             <Input
               placeholder="Keyboard name (e.g. Cherry MX Blue)"

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import ShareButton from "@/components/ShareButton";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import AudioDownloadButton from "@/components/AudioDownloadButton";
+import DecibelScale from "@/components/DecibelScale";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -104,16 +105,10 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
         <RecordingAudioPlayer url={recording.audio_url} />
       )}
 
-      {/* Mini bar indicator */}
-      <div className="mt-3 h-1 rounded-full bg-muted overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${Math.min((recording.avg_decibels / 100) * 100, 100)}%`,
-            background: `linear-gradient(90deg, #10b981, ${recording.avg_decibels > 60 ? '#f59e0b' : '#10b981'})`,
-          }}
-        />
-      </div>
+      {/* dB comparison scale */}
+      {recording.avg_decibels != null && (
+        <DecibelScale db={recording.avg_decibels} className="mt-3" />
+      )}
     </motion.div>
   );
 }

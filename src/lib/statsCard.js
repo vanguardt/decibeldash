@@ -14,23 +14,48 @@ function truncate(s, n) {
   return s && s.length > n ? s.slice(0, n - 1) + "…" : s || "";
 }
 
-function drawWaveform(ctx, samples, x, y, w, h) {
+// Draws a mirrored frequency-bar "sound signature" from decibel samples.
+function drawSoundSignature(ctx, samples, x, y, w, h) {
   if (!samples || !samples.length) return;
   const midY = y + h / 2;
-  ctx.strokeStyle = "rgba(52,211,153,0.85)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  const n = Math.min(samples.length, 240);
-  const stride = samples.length / n;
-  for (let i = 0; i < n; i++) {
-    const s = samples[Math.floor(i * stride)];
-    const px = x + (i / (n - 1)) * w;
-    const norm = Math.max(0, Math.min(1, (s.db - 20) / 80));
-    const py = midY - (norm - 0.4) * h;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
+  const numBars = 56;
+  const barWidth = w / numBars;
+  const gap = barWidth * 0.28;
+  const drawW = barWidth - gap;
+
+  // Resample decibel samples into bar buckets
+  const bars = new Array(numBars).fill(0);
+  const stride = samples.length / numBars;
+  for (let i = 0; i < numBars; i++) {
+    let sum = 0, count = 0;
+    const start = Math.floor(i * stride);
+    const end = Math.min(samples.length, Math.floor((i + 1) * stride));
+    for (let j = start; j < end; j++) {
+      sum += samples[j].db;
+      count++;
+    }
+    bars[i] = count > 0 ? sum / count : 0;
   }
-  ctx.stroke();
+
+  for (let i = 0; i < numBars; i++) {
+    const norm = Math.max(0, Math.min(1, (bars[i] - 20) / 80));
+    const barH = Math.max(4, norm * h * 0.9);
+    const px = x + i * barWidth + gap / 2;
+
+    const grad = ctx.createLinearGradient(0, midY + barH / 2, 0, midY - barH / 2);
+    grad.addColorStop(0, "#10b981");
+    grad.addColorStop(0.6, "#34d399");
+    grad.addColorStop(1, "#22d3ee");
+    ctx.fillStyle = grad;
+
+    const r = Math.min(drawW / 2, barH / 2, 4);
+    roundRect(ctx, px, midY - barH / 2, drawW, barH, r);
+    ctx.fill();
+  }
+
+  // Center line
+  ctx.fillStyle = "rgba(52,211,153,0.2)";
+  ctx.fillRect(x, midY - 0.5, w, 1);
 }
 
 export function drawStatsCard(ctx, rec, W, H) {
@@ -56,7 +81,7 @@ export function drawStatsCard(ctx, rec, W, H) {
   // waveform
   let samples = [];
   try { samples = JSON.parse(rec.decibel_samples || "[]"); } catch {}
-  drawWaveform(ctx, samples, 80, 235, W - 160, 170);
+  drawSoundSignature(ctx, samples, 80, 235, W - 160, 170);
 
   // big avg dB
   ctx.fillStyle = "#ffffff";

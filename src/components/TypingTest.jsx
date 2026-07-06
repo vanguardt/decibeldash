@@ -57,11 +57,10 @@ export default function TypingTest({
     newPassage();
   }, [newPassage]);
 
-  // Lock scroll + keep centered while the test is running
+  // Pin the typing card to the viewport center while the test runs,
+  // so the mobile keyboard's auto-scroll can't push it off-screen.
   useEffect(() => {
     if (!startTime || completed) return;
-    const el = containerRef.current;
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -149,7 +148,14 @@ export default function TypingTest({
   };
 
   return (
-    <div ref={containerRef} className="w-full bg-card border border-border rounded-xl p-4">
+    <div
+      ref={containerRef}
+      className={
+        startTime && !completed
+          ? "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-lg bg-card border border-border rounded-xl p-4 shadow-2xl"
+          : "w-full bg-card border border-border rounded-xl p-4"
+      }
+    >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs uppercase tracking-widest text-muted-foreground">
           Typing Test
@@ -179,10 +185,6 @@ export default function TypingTest({
         onClick={() => {
           if (isRecording && !completed) {
             inputRef.current?.focus({ preventScroll: true });
-            // Re-center after the mobile keyboard resize/scroll settles
-            setTimeout(() => {
-              containerRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-            }, 300);
           }
         }}
       >

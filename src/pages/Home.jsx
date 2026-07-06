@@ -302,6 +302,12 @@ export default function Home() {
       ? samplesRef.current.reduce((s, sample) => s + sample.db, 0) / samplesRef.current.length
       : currentDb;
 
+    // Capture data before reset clears refs
+    const heatmap = { ...keyStatsRef.current };
+    const samplesCopy = samplesRef.current.slice(0, 500);
+    const peakCopy = peakRef.current;
+    const minCopy = minRef.current === Infinity ? 0 : minRef.current;
+
     // Optimistically close the form and show success immediately
     resetRecording();
     toast({ title: "Recording saved!" });
@@ -316,8 +322,8 @@ export default function Home() {
       await base44.entities.SoundRecording.create({
         name: saveName.trim(),
         avg_decibels: Math.round(avgDb * 10) / 10,
-        peak_decibels: Math.round(peakRef.current * 10) / 10,
-        min_decibels: minRef.current === Infinity ? 0 : Math.round(minRef.current * 10) / 10,
+        peak_decibels: Math.round(peakCopy * 10) / 10,
+        min_decibels: Math.round(minCopy * 10) / 10,
         duration_seconds: elapsedTime,
         notes: saveNotes.trim() || undefined,
         category: saveCategory,
@@ -326,13 +332,13 @@ export default function Home() {
         modifications: JSON.stringify(
           Object.entries(saveMods).filter(([, v]) => v).map(([k]) => k)
         ) || undefined,
-        decibel_samples: JSON.stringify(samplesRef.current.slice(0, 500)),
+        decibel_samples: JSON.stringify(samplesCopy),
         wpm: wpm > 0 ? wpm : undefined,
         accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
         total_words: wpm > 0 ? Math.round((elapsedTime / 60) * wpm) : undefined,
         audio_url: audioUrl || undefined,
-        key_heatmap: Object.keys(keyStatsRef.current).length > 0
-          ? JSON.stringify(keyStatsRef.current)
+        key_heatmap: Object.keys(heatmap).length > 0
+          ? JSON.stringify(heatmap)
           : undefined,
       });
     } catch (err) {

@@ -60,6 +60,7 @@ export default function Home() {
   const audioUrlRef = useRef(null);
   const pendingUploadRef = useRef(null);
   const currentDbRef = useRef(0);
+  const recentPeakRef = useRef(0);
   const keyStatsRef = useRef({});
   const [liveHeatmap, setLiveHeatmap] = useState({});
 
@@ -86,7 +87,7 @@ export default function Home() {
   }, []);
 
   const handleKeystroke = useCallback((char) => {
-    const db = currentDbRef.current;
+    const db = Math.max(currentDbRef.current, recentPeakRef.current);
     if (db <= 35) return; // ignore if below noise gate
     const stats = keyStatsRef.current[char] || { hits: 0, totalDb: 0, avg_db: 0, peak_db: 0 };
     stats.hits++;
@@ -139,6 +140,7 @@ export default function Home() {
       keyStatsRef.current = {};
       setIsRecording(true);
       setPermissionDenied(false);
+      recentPeakRef.current = 0;
       // In Sound Only mode, metering starts immediately
       if (soundOnlyRef.current) {
         beginMetering();
@@ -199,6 +201,11 @@ export default function Home() {
       const db = calculateDecibels(analyser);
       setCurrentDb(db);
       currentDbRef.current = db;
+
+      // Track a rolling peak that decays slowly so keystroke events
+      // (which fire slightly before the sound reaches the analyser)
+      // can still attribute the correct dB to the key pressed.
+      recentPeakRef.current = Math.max(db, recentPeakRef.current * 0.92);
 
       // Only track keyboard sounds above the noise gate
       if (db > 35) {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Check, Share2, X, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SoundProfileBadge from "@/components/SoundProfileBadge";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
+import ComparisonShareModal from "@/components/ComparisonShareModal";
 
 export default function Creator() {
   const { toast } = useToast();
@@ -11,6 +12,8 @@ export default function Creator() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const comparisonRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -37,20 +40,7 @@ export default function Creator() {
   };
 
   const handleShare = () => {
-    const lines = selected.map((r, i) => {
-      const mods = (() => { try { return JSON.parse(r.modifications || "[]"); } catch { return []; } })();
-      const modStr = mods.length > 0 ? ` · mods: ${mods.join(", ")}` : "";
-      return `${i + 1}. ${r.name} — ${r.avg_decibels?.toFixed(1)} dB avg / ${r.peak_decibels?.toFixed(1)} dB peak${r.wpm ? ` · ${r.wpm} WPM` : ""}${modStr}`;
-    });
-    const text = `🔊 Keyboard Sound Comparison\n\n${lines.join("\n")}\n\nPowered by DecibelDash`;
-
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      toast({ title: "Comparison copied to clipboard!" });
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      toast({ title: "Copy failed", variant: "destructive" });
-    });
+    setShowShare(true);
   };
 
   if (loading) {
@@ -72,7 +62,7 @@ export default function Creator() {
 
       {/* Selected comparison */}
       {selected.length >= 2 && (
-        <div className="bg-card border border-border rounded-xl p-4 mb-5">
+        <div ref={comparisonRef} className="bg-card border border-border rounded-xl p-4 mb-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Comparison ({selected.length})
@@ -81,8 +71,8 @@ export default function Creator() {
               onClick={handleShare}
               className="flex items-center gap-1.5 text-xs font-medium text-primary px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5"
             >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
-              {copied ? "Copied!" : "Share"}
+              <Share2 className="w-3.5 h-3.5" />
+              Share
             </button>
           </div>
 
@@ -205,6 +195,12 @@ export default function Creator() {
           </div>
         )}
       </div>
+      <ComparisonShareModal
+        targetRef={comparisonRef}
+        recordings={selected}
+        open={showShare}
+        onClose={() => setShowShare(false)}
+      />
     </div>
   );
 }

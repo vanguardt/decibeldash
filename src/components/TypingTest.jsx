@@ -27,6 +27,7 @@ export default function TypingTest({
   const [timeRemaining, setTimeRemaining] = useState(TYPING_DURATION);
 
   const inputRef = useRef(null);
+  const containerRef = useRef(null);
   const typedRef = useRef("");
   const startTimeRef = useRef(null);
   const completedRef = useRef(false);
@@ -136,7 +137,7 @@ export default function TypingTest({
   };
 
   return (
-    <div className="w-full bg-card border border-border rounded-xl p-4">
+    <div ref={containerRef} className="w-full bg-card border border-border rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs uppercase tracking-widest text-muted-foreground">
           Typing Test
@@ -163,9 +164,15 @@ export default function TypingTest({
       {/* Passage display */}
       <div
         className="text-sm leading-relaxed font-mono mb-3 select-none"
-        onClick={() =>
-          isRecording && !completed && inputRef.current?.focus({ preventScroll: true })
-        }
+        onClick={() => {
+          if (isRecording && !completed) {
+            inputRef.current?.focus({ preventScroll: true });
+            // Re-center after the mobile keyboard resize/scroll settles
+            setTimeout(() => {
+              containerRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+            }, 300);
+          }
+        }}
       >
         {passage.split("").map((char, i) => {
           let className = "text-muted-foreground/50";

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
 import { Mic, List, GitCompare, Trophy, Dices, Layers, Boxes, Settings as SettingsIcon, Sparkles, Clapperboard } from "lucide-react";
 import Header from "@/components/Header";
@@ -53,6 +53,31 @@ function KeepAliveOutlet() {
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+  };
+
+  useEffect(() => {
+    updateScrollState();
+  }, []);
+
+  useEffect(() => {
+    // Auto-scroll active item into view
+    const el = scrollRef.current;
+    if (!el) return;
+    const activeLink = el.querySelector('[data-active="true"]');
+    if (activeLink) {
+      activeLink.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+    setTimeout(updateScrollState, 300);
+  }, [pathname]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -66,22 +91,37 @@ export default function Layout() {
         className="fixed bottom-0 left-0 right-0 bg-card/80 backdrop-blur-xl border-t border-border z-50"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="max-w-lg mx-auto flex items-center h-16 overflow-x-auto scrollbar-hide">
-          {navItems.map(({ path, icon: Icon, label }) => {
-            const active = pathname === path;
-            return (
-              <Link
-                key={path}
-                to={path}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-2 rounded-lg transition-colors shrink-0 ${
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.5} />
-                <span className="text-[10px] font-medium tracking-wide">{label}</span>
-              </Link>
-            );
-          })}
+        <div className="max-w-lg mx-auto relative">
+          {/* Left fade */}
+          {canScrollLeft && (
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-card to-transparent z-10 pointer-events-none" />
+          )}
+          {/* Right fade */}
+          {canScrollRight && (
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent z-10 pointer-events-none" />
+          )}
+          <div
+            ref={scrollRef}
+            onScroll={updateScrollState}
+            className="flex items-center h-16 overflow-x-auto scrollbar-hide"
+          >
+            {navItems.map(({ path, icon: Icon, label }) => {
+              const active = pathname === path;
+              return (
+                <Link
+                  key={path}
+                  to={path}
+                  data-active={active}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-colors shrink-0 ${
+                    active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.5} />
+                  <span className="text-[10px] font-medium tracking-wide whitespace-nowrap">{label}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </nav>
     </div>

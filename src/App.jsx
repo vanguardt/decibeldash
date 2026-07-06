@@ -12,6 +12,7 @@ import Recordings from '@/pages/Recordings';
 import Compare from '@/pages/Compare';
 import Rankings from '@/pages/Rankings';
 import SoundRoulette from '@/pages/SoundRoulette';
+import Recommend from '@/pages/Recommend';
 import SwitchLibrary from '@/pages/SwitchLibrary';
 import SwitchDetail from '@/pages/SwitchDetail';
 import BuildProfiles from '@/pages/BuildProfiles';
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
         <Route path="/compare" element={<Compare />} />
         <Route path="/rankings" element={<Rankings />} />
         <Route path="/roulette" element={<SoundRoulette />} />
+        <Route path="/recommend" element={<Recommend />} />
         <Route path="/switches" element={<SwitchLibrary />} />
         <Route path="/switches/:id" element={<SwitchDetail />} />
         <Route path="/builds" element={<BuildProfiles />} />

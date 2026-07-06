@@ -84,36 +84,39 @@ export default function ShareButton({ recording, className }) {
     toast({ title: "Press and hold the text to copy manually" });
   };
 
+  // Only use native share on touch/mobile devices — desktop browsers have
+  // navigator.share but it opens a poor/unusable dialog, so skip straight
+  // to the modal there.
+  const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
   const handleShare = async (e) => {
     e.stopPropagation();
     const text = buildText();
 
-    // Try native share with image first (mobile), then text-only, then modal
-    if (imgBlob) {
-      const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
-      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: recording.name, text, files: [file] });
-          return; // shared successfully
-        } catch {
-          // cancelled or failed — fall through to modal
+    if (isTouchDevice) {
+      // Try file share first, then text-only
+      if (imgBlob) {
+        const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
+        if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ title: recording.name, text, files: [file] });
+            return;
+          } catch {}
         }
       }
-    }
-    // Text-only native share (more widely supported than files)
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title: recording.name, text });
-        return;
-      } catch {
-        // cancelled or failed — fall through to modal
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share({ title: recording.name, text });
+          return;
+        } catch {}
       }
     }
-    // Fallback: show modal for manual copy/download
+
+    // Desktop or native share unavailable: show modal
     setOpen(true);
   };
 
-  const hasNativeShare = typeof navigator.share === "function";
+  const hasNativeShare = isTouchDevice && typeof navigator.share === "function";
 
   return (
     <>

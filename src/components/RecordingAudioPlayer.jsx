@@ -11,7 +11,7 @@ export default function RecordingAudioPlayer({ url, onPlay }) {
     const audio = audioRef.current;
     if (!audio) return;
     if (playing) audio.pause();
-    else { audio.play().catch(() => {}); onPlay?.(); }
+    else audio.play().catch(() => {});
   };
 
   return (
@@ -37,7 +37,7 @@ export default function RecordingAudioPlayer({ url, onPlay }) {
       <audio
         ref={audioRef}
         src={url}
-        onPlay={() => setPlaying(true)}
+        onPlay={() => { setPlaying(true); onPlay?.(); }}
         onPause={() => setPlaying(false)}
         onEnded={() => {
           setPlaying(false);

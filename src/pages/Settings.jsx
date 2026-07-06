@@ -83,6 +83,11 @@ export default function Settings() {
                 your saved sound recordings from our servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <h3>About DecibelDash</h3>
+<p>Created by Roger</p>
+<p>Built on Base44</p>
+<p>Version 1.0.0</p>
+
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
               <AlertDialogAction

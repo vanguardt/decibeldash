@@ -573,6 +573,16 @@ export default function Home() {
               />
             )}
 
+            {!soundOnly && Object.keys(liveHeatmap).length > 0 && (
+              <div className="bg-background border border-border rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Grid3x3 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs font-semibold">Key Heatmap</span>
+                </div>
+                <KeyboardHeatmap recording={{ key_heatmap: JSON.stringify(liveHeatmap) }} />
+              </div>
+            )}
+
             <Input
               placeholder="Keyboard name (e.g. Cherry MX Blue)"
               value={saveName}

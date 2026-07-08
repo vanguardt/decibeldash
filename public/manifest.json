@@ -1,0 +1,26 @@
+{
+  "name": "DecibelDash",
+  "short_name": "DecibelDash",
+  "description": "Record, store, and compare the acoustic profiles and typing speed of mechanical keyboards.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#060a0e",
+  "theme_color": "#0fa969",
+  "categories": ["utilities", "productivity", "music"],
+  "icons": [
+    {
+      "src": "https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

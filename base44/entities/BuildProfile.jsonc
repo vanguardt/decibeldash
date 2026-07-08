@@ -69,6 +69,21 @@
     "notes": {
       "type": "string",
       "description": "Notes about the build"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this build profile was viewed"
+    },
+    "share_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this build profile was shared"
+    },
+    "download_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times this build profile audio was downloaded"
     }
   },
   "required": [

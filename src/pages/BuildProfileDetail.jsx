@@ -6,6 +6,7 @@ import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import ModRecommendations from "@/components/ModRecommendations";
+import ShareButton from "@/components/ShareButton";
 
 const BUILD_TYPE_STYLES = {
   Silent: "bg-blue-500/15 text-blue-400",
@@ -25,6 +26,10 @@ export default function BuildProfileDetail() {
       try {
         const data = await base44.entities.BuildProfile.get(id);
         setProfile(data);
+        // Increment view count (fire-and-forget)
+        base44.entities.BuildProfile.update(id, {
+          view_count: (data.view_count || 0) + 1,
+        }).catch(() => {});
       } catch {
         // ignore
       } finally {
@@ -58,8 +63,21 @@ export default function BuildProfileDetail() {
   return (
     <div className="min-h-screen px-4 py-6 max-w-lg mx-auto">
       {/* Header */}
-      <div className="mb-4">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold tracking-tight">{profile.name}</h1>
+        <ShareButton
+          recording={profile}
+          onShare={() => {
+            base44.entities.BuildProfile.update(profile.id, {
+              share_count: (profile.share_count || 0) + 1,
+            }).catch(() => {});
+          }}
+          onDownload={() => {
+            base44.entities.BuildProfile.update(profile.id, {
+              download_count: (profile.download_count || 0) + 1,
+            }).catch(() => {});
+          }}
+        />
       </div>
       <div className="flex flex-wrap gap-2 mb-5">
         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${BUILD_TYPE_STYLES[profile.build_type] || BUILD_TYPE_STYLES.Custom}`}>

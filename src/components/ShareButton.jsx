@@ -3,7 +3,7 @@ import { Share2, X, Download, Clipboard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { makeStatsImage } from "@/lib/statsCard";
 
-export default function ShareButton({ recording, className }) {
+export default function ShareButton({ recording, className, onShare, onDownload }) {
   const { toast } = useToast();
   const [imgBlob, setImgBlob] = useState(null);
   const [open, setOpen] = useState(false);
@@ -95,6 +95,7 @@ export default function ShareButton({ recording, className }) {
   const hasNativeShare = typeof navigator.share === "function";
 
   const handleNativeShare = async () => {
+    if (onShare) onShare();
     const text = buildText();
     if (imgBlob && typeof navigator.canShare === "function") {
       const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
@@ -116,7 +117,7 @@ export default function ShareButton({ recording, className }) {
     <>
       <button
         type="button"
-        onClick={handleShare}
+        onClick={(e) => { if (onShare) onShare(); handleShare(e); }}
         className={`flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-colors shrink-0 ${className || ""}`}
         aria-label="Share or download"
       >
@@ -182,7 +183,7 @@ export default function ShareButton({ recording, className }) {
               )}
               <button
                 type="button"
-                onClick={() => imgBlob && downloadBlob(imgBlob, `${safeName()}.png`)}
+                onClick={() => { if (onDownload) onDownload(); if (imgBlob) downloadBlob(imgBlob, `${safeName()}.png`); }}
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent"
               >
                 <Download className="w-4 h-4" /> Save

@@ -1,15 +1,17 @@
 import React, { useState } from "react";
-import { Loader2, Trophy, Folder, Wrench, GitCompare, User } from "lucide-react";
+import { Loader2, Trophy, Folder, Wrench, GitCompare, User, BarChart3 } from "lucide-react";
 import { useCreatorData } from "@/hooks/useCreatorData";
 import CreatorComparison from "@/components/CreatorComparison";
 import CreatorIdentityCard from "@/components/CreatorIdentityCard";
 import CreatorBadgeGrid from "@/components/CreatorBadgeGrid";
+import CreatorStatsDashboard from "@/components/CreatorStatsDashboard";
 import ChallengeList from "@/components/ChallengeList";
 import CollectionManager from "@/components/CollectionManager";
 import TemplateList from "@/components/TemplateList";
 
 const TABS = [
   { id: "profile", label: "Profile", icon: User },
+  { id: "stats", label: "Stats", icon: BarChart3 },
   { id: "collections", label: "Collections", icon: Folder },
   { id: "challenges", label: "Challenges", icon: Trophy },
   { id: "templates", label: "Templates", icon: Wrench },
@@ -73,6 +75,14 @@ export default function Creator() {
             collections={collections}
           />
         </div>
+      )}
+
+      {tab === "stats" && (
+        <CreatorStatsDashboard
+          recordings={recordings}
+          builds={builds}
+          collections={collections}
+        />
       )}
 
       {tab === "collections" && (

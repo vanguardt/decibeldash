@@ -22,9 +22,9 @@ export function useSubscription() {
 
   const refresh = useCallback(async () => {
     try {
-      const user = await base44.auth.me();
-      setTier(user?.subscription_tier || "free");
-      setSubType(user?.subscription_type || null);
+      const response = await base44.functions.invoke("getSubscriptionStatus", {});
+      setTier(response.data?.subscription_tier || "free");
+      setSubType(response.data?.subscription_type || null);
     } catch {
       setTier("free");
     } finally {

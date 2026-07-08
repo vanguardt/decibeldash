@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
       line_items: [{ price: config.price_id, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
+      customer_creation: 'always', // Ensures a Stripe customer is always created so we can recover Pro status by email
       metadata: {
         base44_app_id: Deno.env.get('BASE44_APP_ID') || '',
         tier_type: config.tier_type,

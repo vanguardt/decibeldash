@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 export const FREE_RECORDING_LIMIT = 5;
 export const PLATFORM_FEE_PERCENT = 0.25; // 25% platform, 75% creator
@@ -16,6 +17,7 @@ export const PREMIUM_FEATURES = {
 };
 
 export function useSubscription() {
+  const { user } = useAuth();
   const [tier, setTier] = useState("free");
   const [subType, setSubType] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,9 +34,10 @@ export function useSubscription() {
     }
   }, []);
 
+  // Re-fetch when the user changes (login/logout) so Pro status is always current
   useEffect(() => {
     refresh();
-  }, [refresh]);
+  }, [refresh, user?.id]);
 
   const isPro = tier === "pro";
 

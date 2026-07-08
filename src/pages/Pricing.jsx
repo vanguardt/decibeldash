@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { Check, Crown, Zap, Loader2, KeyRound, ExternalLink } from "lucide-react";
+import { Check, Crown, Zap, Loader2, ExternalLink } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
 
 const FREE_FEATURES = [
   "Basic sound recording",
@@ -28,54 +27,43 @@ const PRO_FEATURES = [
   "Ad-free experience",
 ];
 
-// PayPal checkout — funds go to roger@roger-thornton.com
-// After payment, PayPal redirects back to /payment-success which auto-generates & emails the code
-const PAYPAL_CONFIG = {
-  business: "roger@roger-thornton.com",
-  lifetime: { amount: "9.99", itemName: "DecibelDash Pro - Lifetime" },
-  monthly: { amount: "2.99", itemName: "DecibelDash Pro - Monthly" },
-};
-
-function buildPayPalUrl(type) {
-  const cfg = PAYPAL_CONFIG[type];
-  const returnUrl = encodeURIComponent(`${window.location.origin}/payment-success?type=${type}`);
-  return `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${PAYPAL_CONFIG.business}&amount=${cfg.amount}&item_name=${encodeURIComponent(cfg.itemName)}&currency_code=USD&return=${returnUrl}`;
-}
-
 export default function Pricing() {
-  const { isPro, subType, redeemCode } = useSubscription();
+  const { isPro, subType } = useSubscription();
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [unlockCode, setUnlockCode] = useState("");
-  const [redeeming, setRedeeming] = useState(false);
+  const [loading, setLoading] = useState(null);
 
-  const handleRedeem = async () => {
-    if (!unlockCode.trim()) {
-      toast({ title: "Please enter your unlock code", variant: "destructive" });
+  const handleCheckout = async (planType) => {
+    // Block checkout if running inside an iframe (builder preview)
+    if (window.self !== window.top) {
+      toast({
+        title: "Open in a new tab",
+        description: "Checkout works only from the published app.",
+        variant: "destructive",
+      });
       return;
     }
-    setRedeeming(true);
+
+    setLoading(planType);
     try {
-      await redeemCode(unlockCode);
-      toast({
-        title: "Welcome to Pro! 👑",
-        description: "Your unlock code was accepted — Pro is now active.",
+      const response = await base44.functions.invoke("stripeCheckout", {
+        plan_type: planType,
+        origin: window.location.origin,
       });
-      setUnlockCode("");
-      navigate("/");
+      const data = response.data;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data?.error || "Failed to start checkout");
+      }
     } catch (err) {
       toast({
-        title: "Invalid code",
-        description: err.message || "Please check your code and try again.",
+        title: "Checkout failed",
+        description: err.message || "Please try again.",
         variant: "destructive",
       });
     } finally {
-      setRedeeming(false);
+      setLoading(null);
     }
-  };
-
-  const handlePayPal = (type) => {
-    window.location.href = buildPayPalUrl(type);
   };
 
   return (
@@ -121,7 +109,7 @@ export default function Pricing() {
         </div>
       </div>
 
-      {/* Pro tier — PayPal purchase */}
+      {/* Pro tier — Stripe checkout */}
       {!isPro && (
         <>
           <div className="bg-primary/5 border-2 border-primary/30 rounded-2xl p-5 mb-4 relative overflow-hidden">
@@ -138,34 +126,44 @@ export default function Pricing() {
               </div>
             </div>
 
-            {/* Lifetime via PayPal */}
+            {/* Lifetime via Stripe */}
             <button
-              onClick={() => handlePayPal("lifetime")}
-              className="w-full bg-primary text-primary-foreground rounded-xl p-4 mb-3 text-left hover:bg-primary/90 transition-colors"
+              onClick={() => handleCheckout("lifetime")}
+              disabled={loading !== null}
+              className="w-full bg-primary text-primary-foreground rounded-xl p-4 mb-3 text-left hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold">Lifetime</p>
-                  <p className="text-[10px] opacity-80">One-time payment via PayPal</p>
+                  <p className="text-sm font-bold">
+                    {loading === "lifetime" ? "Redirecting..." : "Lifetime"}
+                  </p>
+                  <p className="text-[10px] opacity-80">One-time payment</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <p className="text-2xl font-bold">$9.99</p>
                     <p className="text-[10px] opacity-80">forever</p>
                   </div>
-                  <ExternalLink className="w-4 h-4 opacity-70" />
+                  {loading === "lifetime" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-4 h-4 opacity-70" />
+                  )}
                 </div>
               </div>
             </button>
 
-            {/* Monthly via PayPal */}
+            {/* Monthly via Stripe */}
             <button
-              onClick={() => handlePayPal("monthly")}
-              className="w-full border border-primary/30 rounded-xl p-4 text-left hover:bg-primary/5 transition-colors"
+              onClick={() => handleCheckout("monthly")}
+              disabled={loading !== null}
+              className="w-full border border-primary/30 rounded-xl p-4 text-left hover:bg-primary/5 transition-colors disabled:opacity-60"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold">Monthly</p>
+                  <p className="text-sm font-bold">
+                    {loading === "monthly" ? "Redirecting..." : "Monthly"}
+                  </p>
                   <p className="text-[10px] text-muted-foreground">Cancel anytime</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -173,37 +171,14 @@ export default function Pricing() {
                     <p className="text-2xl font-bold">$2.99</p>
                     <p className="text-[10px] text-muted-foreground">/month</p>
                   </div>
-                  <ExternalLink className="w-4 h-4 opacity-50" />
+                  {loading === "monthly" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-4 h-4 opacity-50" />
+                  )}
                 </div>
               </div>
             </button>
-          </div>
-
-          {/* Unlock code redemption */}
-          <div className="bg-card border border-border rounded-2xl p-5 mb-4">
-            <div className="flex items-center gap-1.5 mb-2">
-              <KeyRound className="w-4 h-4 text-primary" />
-              <h2 className="text-sm font-semibold">Enter Unlock Code</h2>
-            </div>
-            <p className="text-xs text-muted-foreground mb-3">
-              Already purchased? You'll receive a unique unlock code after PayPal checkout. Enter it below to activate Pro.
-            </p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g. DD-PRO-LIFE-XXXXXX"
-                value={unlockCode}
-                onChange={(e) => setUnlockCode(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleRedeem()}
-                className="bg-background font-mono text-sm"
-              />
-              <Button
-                onClick={handleRedeem}
-                disabled={redeeming}
-                className="shrink-0"
-              >
-                {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlock"}
-              </Button>
-            </div>
           </div>
         </>
       )}
@@ -224,7 +199,7 @@ export default function Pricing() {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center mt-4">
-        Payments processed via PayPal. After purchase you'll receive a unique unlock code by email to activate Pro.
+        Payments processed securely via Stripe.
       </p>
     </div>
   );

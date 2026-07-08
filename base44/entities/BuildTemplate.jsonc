@@ -1,0 +1,49 @@
+{
+  "name": "BuildTemplate",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name (e.g. Silent Build Template, Thock Starter)"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this template achieves and how to apply it"
+    },
+    "modifications": {
+      "type": "string",
+      "description": "JSON string of recommended modifications"
+    },
+    "switch_type": {
+      "type": "string",
+      "description": "Recommended switch type"
+    },
+    "keycap_profile": {
+      "type": "string",
+      "description": "Recommended keycap profile"
+    },
+    "build_type": {
+      "type": "string",
+      "enum": [
+        "Silent",
+        "Gaming",
+        "Thock",
+        "Clack",
+        "Custom"
+      ],
+      "default": "Custom",
+      "description": "Build type category"
+    },
+    "target_db": {
+      "type": "number",
+      "description": "Target average dB level this template aims for"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Name of the creator who published this template"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

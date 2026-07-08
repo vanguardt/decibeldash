@@ -5,6 +5,7 @@ import { useUserBehavior } from "@/hooks/useUserBehavior";
 import SmartSuggestions from "@/components/SmartSuggestions";
 import AcousticInsights from "@/components/AcousticInsights";
 import AcousticProfileSummary from "@/components/AcousticProfileSummary";
+import CreatorSpotlight from "@/components/CreatorSpotlight";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -620,6 +621,11 @@ export default function Home() {
       {/* Acoustic profile summary — metrics from your recording history */}
       {!isRecording && !showSaveForm && (
         <AcousticProfileSummary wpmHistory={behavior.wpmHistory} />
+      )}
+
+      {/* Creator spotlight — tier, build of the week, rising creator */}
+      {!isRecording && !showSaveForm && (
+        <CreatorSpotlight />
       )}
 
       {/* Personalized coaching insights */}

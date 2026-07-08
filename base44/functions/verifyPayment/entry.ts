@@ -26,28 +26,36 @@ Deno.serve(async (req) => {
 
     console.log('verifyPayment:', { sessionId, tierType, userEmail });
 
-    // If user is authenticated, update their record via auth.updateMe (persists to DB)
+    // Update the user's record in the DB via service role (auth.updateMe does NOT persist from backend functions)
     let updated = false;
+    let userId = null;
     try {
       const currentUser = await base44.auth.me();
-      if (currentUser?.id) {
-        console.log('Updating via auth.updateMe for user:', currentUser.id);
-        await base44.auth.updateMe({
+      if (currentUser?.id) userId = currentUser.id;
+    } catch (e) {
+      console.log('auth.me failed:', e.message);
+    }
+
+    // Path 1: authenticated user — update by their user ID
+    if (userId) {
+      try {
+        console.log('Updating user via service role by ID:', userId);
+        await base44.asServiceRole.entities.User.update(userId, {
           subscription_tier: 'pro',
           subscription_type: tierType,
         });
         updated = true;
+      } catch (e) {
+        console.error('Service role update by ID failed:', e.message);
       }
-    } catch (e) {
-      console.log('auth.me/updateMe failed:', e.message);
     }
 
-    // Fallback: update by email via service role (for anonymous checkouts that later register)
+    // Path 2: not authenticated — look up by email from Stripe session
     if (!updated && userEmail) {
       try {
         const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
         if (users && users.length > 0) {
-          console.log('Updating via service role by email:', users[0].id);
+          console.log('Updating user via service role by email:', users[0].id);
           await base44.asServiceRole.entities.User.update(users[0].id, {
             subscription_tier: 'pro',
             subscription_type: tierType,
@@ -55,7 +63,7 @@ Deno.serve(async (req) => {
           updated = true;
         }
       } catch (e) {
-        console.error('Service role update failed:', e.message);
+        console.error('Service role update by email failed:', e.message);
       }
     }
 

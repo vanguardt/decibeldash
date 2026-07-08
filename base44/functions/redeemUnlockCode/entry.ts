@@ -31,9 +31,9 @@ Deno.serve(async (req) => {
       redeemed_by_id: user.id,
     });
 
-    // Upgrade the user's tier
+    // Upgrade the user's tier directly in DB (bypasses stale JWT token issue)
     const tierType = unlockCode.tier_type || 'lifetime';
-    await base44.auth.updateMe({
+    await base44.asServiceRole.entities.User.update(user.id, {
       subscription_tier: 'pro',
       subscription_type: tierType,
     });

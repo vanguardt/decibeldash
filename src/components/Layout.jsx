@@ -2,6 +2,21 @@ import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
 import { Mic, List, GitCompare, Trophy, Dices, Layers, Boxes, Settings as SettingsIcon, Sparkles, Clapperboard } from "lucide-react";
 import Header from "@/components/Header";
+import { useUserBehavior } from "@/hooks/useUserBehavior";
+import AchievementToast from "@/components/AchievementToast";
+
+const PATH_TO_FEATURE = {
+  "/": "home",
+  "/recordings": "recordings",
+  "/compare": "compare",
+  "/switches": "switches",
+  "/builds": "builds",
+  "/rankings": "rankings",
+  "/roulette": "roulette",
+  "/recommend": "recommend",
+  "/creator": "creator",
+  "/settings": "settings",
+};
 
 const navItems = [
   { path: "/", icon: Mic, label: "Record" },
@@ -53,9 +68,15 @@ function KeepAliveOutlet() {
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const { trackFeatureVisit, pendingAchievement, dismissAchievement } = useUserBehavior();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  useEffect(() => {
+    const feature = PATH_TO_FEATURE[pathname];
+    if (feature) trackFeatureVisit(feature);
+  }, [pathname, trackFeatureVisit]);
 
   const updateScrollState = () => {
     const el = scrollRef.current;
@@ -81,6 +102,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <AchievementToast achievement={pendingAchievement} onDismiss={dismissAchievement} />
       <Header />
       <main className="flex-1 pb-20">
         <KeepAliveOutlet />

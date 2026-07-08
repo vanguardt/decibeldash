@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 } from "lucide-react";
+import { useUserBehavior } from "@/hooks/useUserBehavior";
+import SmartSuggestions from "@/components/SmartSuggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +18,7 @@ import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 
 export default function Home() {
   const { toast } = useToast();
+  const { behavior, streak, suggestions, trackRecording, trackBuild } = useUserBehavior();
   const [isRecording, setIsRecording] = useState(false);
   const [currentDb, setCurrentDb] = useState(0);
   const [peakDb, setPeakDb] = useState(0);
@@ -100,6 +103,23 @@ export default function Home() {
       setLiveHeatmap({ ...keyStatsRef.current });
     }, 100);
   }, []);
+
+  const handleQuickRecord = () => {
+    const { lastMode, lastSettings } = behavior;
+    if (lastMode) {
+      const so = lastMode === "soundOnly";
+      setSoundOnly(so);
+      soundOnlyRef.current = so;
+    }
+    if (lastSettings) {
+      if (lastSettings.category) setSaveCategory(lastSettings.category);
+      if (lastSettings.switchType) setSaveSwitchType(lastSettings.switchType);
+      if (lastSettings.keycapProfile) setSaveKeycapProfile(lastSettings.keycapProfile);
+      if (lastSettings.mods) setSaveMods(lastSettings.mods);
+      if (lastSettings.buildType) setSaveBuildType(lastSettings.buildType);
+    }
+    startRecording();
+  };
 
   const startRecording = async () => {
     try {
@@ -311,6 +331,15 @@ export default function Home() {
     // Optimistically close the form and show success immediately
     resetRecording();
     toast({ title: "Recording saved!" });
+    trackRecording({
+      mode: soundOnly ? "soundOnly" : "typing",
+      category: saveCategory,
+      switchType: saveSwitchType,
+      keycapProfile: saveKeycapProfile,
+      mods: saveMods,
+      buildType: saveBuildType,
+      wpm,
+    });
 
     // Wait for the audio file upload (started when recording stopped)
     let audioUrl = null;
@@ -361,6 +390,16 @@ export default function Home() {
 
     resetRecording();
     toast({ title: "Build profile saved!" });
+    trackBuild();
+    trackRecording({
+      mode: soundOnly ? "soundOnly" : "typing",
+      category: saveCategory,
+      switchType: saveSwitchType,
+      keycapProfile: saveKeycapProfile,
+      mods: saveMods,
+      buildType: saveBuildType,
+      wpm,
+    });
 
     let audioUrl = null;
     if (uploadPromise) {
@@ -412,10 +451,19 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-8 max-w-lg mx-auto">
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight mb-1">Sound Meter</h1>
         <p className="text-xs text-muted-foreground">Measure & compare keyboard noise levels</p>
       </div>
+
+      {/* Smart suggestions — adapts to user habits */}
+      {!isRecording && !showSaveForm && (
+        <SmartSuggestions
+          suggestions={suggestions}
+          streak={streak}
+          onQuickRecord={handleQuickRecord}
+        />
+      )}
 
       {/* Gauge */}
       <DecibelGauge value={currentDb} peak={peakDb} isRecording={meteringStarted} />

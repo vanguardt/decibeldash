@@ -122,19 +122,22 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    setAuthChecked(false);
+    
+    // Clear tokens manually — the SDK's logout() redirects to /api/apps/auth/login
+    // which doesn't exist as a client route, causing a 404.
+    localStorage.removeItem('base44_access_token');
+    localStorage.removeItem('token');
     
     if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
+      window.location.href = '/login';
     }
   };
 
   const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    localStorage.removeItem('base44_access_token');
+    localStorage.removeItem('token');
+    window.location.href = '/login';
   };
 
   return (

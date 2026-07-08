@@ -18,8 +18,10 @@ export const PREMIUM_FEATURES = {
 
 export function useSubscription() {
   const { user } = useAuth();
-  const [tier, setTier] = useState("free");
-  const [subType, setSubType] = useState(null);
+  // Start with whatever the auth context already knows — avoids a flash of "free"
+  // when the user is actually Pro, especially right after login.
+  const [tier, setTier] = useState(user?.subscription_tier || "free");
+  const [subType, setSubType] = useState(user?.subscription_type || null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -36,6 +38,11 @@ export function useSubscription() {
 
   // Re-fetch when the user changes (login/logout) so Pro status is always current
   useEffect(() => {
+    if (user?.id) {
+      // Optimistically set from auth context while the backend verifies
+      setTier(user.subscription_tier || "free");
+      setSubType(user.subscription_type || null);
+    }
     refresh();
   }, [refresh, user?.id]);
 

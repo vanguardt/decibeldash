@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/lib/AuthContext";
 import { Link } from "react-router-dom";
 
 export default function Settings() {
@@ -24,14 +25,14 @@ export default function Settings() {
   const [deleting, setDeleting] = useState(false);
   const [open, setOpen] = useState(false);
   const { isPro, subType, loading: subLoading } = useSubscription();
+  const { logout } = useAuth();
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
       await base44.auth.updateMe({ deleted: true });
       toast({ title: "Account deleted" });
-      await base44.auth.logout();
-      window.location.href = "/login";
+      logout();
     } catch (err) {
       toast({ title: "Something went wrong", variant: "destructive" });
       setOpen(false);
@@ -80,10 +81,7 @@ export default function Settings() {
         <Button
           variant="outline"
           className="w-full justify-start gap-3"
-          onClick={async () => {
-            await base44.auth.logout();
-            window.location.href = "/login";
-          }}
+          onClick={() => logout()}
         >
           <LogOut className="w-4 h-4" />
           Log out

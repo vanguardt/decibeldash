@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
     const { code } = await req.json();
     if (!code || !code.trim()) {
-      return Response.json({ error: 'Please enter a code' }, { status: 400 });
+      return Response.json({ success: false, error: 'Please enter a code' });
     }
 
     // Look up the code using service role (bypasses RLS)
@@ -17,12 +17,12 @@ Deno.serve(async (req) => {
     });
 
     if (!matches || matches.length === 0) {
-      return Response.json({ error: 'Invalid code' }, { status: 404 });
+      return Response.json({ success: false, error: 'Invalid code' });
     }
 
     const unlockCode = matches[0];
     if (unlockCode.used) {
-      return Response.json({ error: 'This code has already been used' }, { status: 400 });
+      return Response.json({ success: false, error: 'This code has already been used' });
     }
 
     // Mark the code as used
@@ -44,6 +44,6 @@ Deno.serve(async (req) => {
       message: 'Pro activated successfully'
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ success: false, error: error.message });
   }
 });

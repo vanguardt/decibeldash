@@ -53,9 +53,12 @@ export function useSubscription() {
     if (!trimmed) throw new Error("Please enter a code");
 
     const response = await base44.functions.invoke("redeemUnlockCode", { code: trimmed });
-    if (response.data?.error) throw new Error(response.data.error);
+    const data = response.data;
+    if (!data || data.success === false || data.error) {
+      throw new Error(data?.error || "Invalid code");
+    }
 
-    const type = response.data?.tier_type || "lifetime";
+    const type = data.tier_type || "lifetime";
     setTier("pro");
     setSubType(type);
   }, []);

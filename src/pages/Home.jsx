@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 } from "lucide-react";
 import { useUserBehavior } from "@/hooks/useUserBehavior";
 import SmartSuggestions from "@/components/SmartSuggestions";
+import AcousticInsights from "@/components/AcousticInsights";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -463,6 +464,11 @@ export default function Home() {
           streak={streak}
           onQuickRecord={handleQuickRecord}
         />
+      )}
+
+      {/* Personalized acoustic coaching — analyzes recordings, heatmaps, WPM, and builds */}
+      {!isRecording && !showSaveForm && (
+        <AcousticInsights wpmHistory={behavior.wpmHistory} />
       )}
 
       {/* Gauge */}

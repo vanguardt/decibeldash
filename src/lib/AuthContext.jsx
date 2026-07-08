@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
           'X-App-Id': appParams.appId
         },
         token: appParams.token, // Include token if available
-        interceptResponses: true
+        interceptResponses: false // Handle errors ourselves to prevent SDK auto-redirect to /api/apps/auth/login
       });
       
       try {
@@ -50,33 +50,43 @@ export const AuthProvider = ({ children }) => {
       } catch (appError) {
         console.error('App state check failed:', appError);
         
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
+        // If token is expired/invalid, clear it and retry as unauthenticated (public app)
+        if (appError.status === 403 && appError.data?.extra_data?.reason === 'auth_required') {
+          localStorage.removeItem('base44_access_token');
+          localStorage.removeItem('token');
+          
+          try {
+            const publicClient = createAxiosClient({
+              baseURL: `/api/apps/public`,
+              headers: { 'X-App-Id': appParams.appId },
+              interceptResponses: false
             });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
+            const publicSettings = await publicClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+            setAppPublicSettings(publicSettings);
+            setIsAuthenticated(false);
+            setAuthChecked(true);
+            setIsLoadingAuth(false);
+            setIsLoadingPublicSettings(false);
+          } catch {
+            setAuthError({ type: 'auth_required', message: 'Authentication required' });
+            setIsLoadingPublicSettings(false);
+            setIsLoadingAuth(false);
           }
+        } else if (appError.status === 403 && appError.data?.extra_data?.reason === 'user_not_registered') {
+          setAuthError({
+            type: 'user_not_registered',
+            message: 'User not registered for this app'
+          });
+          setIsLoadingPublicSettings(false);
+          setIsLoadingAuth(false);
         } else {
           setAuthError({
             type: 'unknown',
             message: appError.message || 'Failed to load app'
           });
+          setIsLoadingPublicSettings(false);
+          setIsLoadingAuth(false);
         }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -100,17 +110,12 @@ export const AuthProvider = ({ children }) => {
       setAuthChecked(true);
     } catch (error) {
       console.error('User auth check failed:', error);
+      // Token is expired/invalid — clear it and proceed as unauthenticated (public app)
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
     }
   };
 

@@ -73,6 +73,12 @@ export function useSubscription() {
       throw new Error(data?.error || "Invalid code");
     }
 
+    // Update subscription on the user record via the authenticated SDK
+    await base44.auth.updateMe({
+      subscription_tier: "pro",
+      subscription_type: data.tier_type || "lifetime",
+    });
+
     // Refresh from DB to get the authoritative state
     await refresh();
   }, [refresh]);

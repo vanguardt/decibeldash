@@ -37,12 +37,7 @@ Deno.serve(async (req) => {
       redeemed_by_id: userId,
     });
 
-    // Update the user's subscription directly via service role
     const tierType = unlockCode.tier_type || 'lifetime';
-    await base44.asServiceRole.entities.User.update(userId, {
-      subscription_tier: 'pro',
-      subscription_type: tierType,
-    });
 
     return Response.json({
       success: true,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Share2, X, Download, Clipboard, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -8,16 +8,22 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
   const [imgUrl, setImgUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const textAreaRef = useRef(null);
 
   const captureImage = async () => {
     if (!targetRef.current) return;
     setLoading(true);
     setError(false);
     setImgBlob(null);
+    // Clean up any previous URL before creating a new one
+    setImgUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(targetRef.current, {
-        backgroundColor: null,
+        backgroundColor: "#00000000",
         scale: 2,
         useCORS: true,
         logging: false,
@@ -25,10 +31,9 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
       const blob = await new Promise((resolve) =>
         canvas.toBlob(resolve, "image/png")
       );
-      if (blob) {
+      if (blob && blob.size > 0) {
         setImgBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setImgUrl(url);
+        setImgUrl(URL.createObjectURL(blob));
       } else {
         setError(true);
       }
@@ -40,14 +45,21 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
   };
 
   useEffect(() => {
-    if (open) {
-      captureImage();
-    }
-    return () => {
-      if (imgUrl) URL.revokeObjectURL(imgUrl);
-    };
+    if (!open) return;
+    // Small delay so the overlay is painted before capturing
+    const timer = setTimeout(captureImage, 150);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Re-capture if the selection changes while the modal is open
+  useEffect(() => {
+    if (open && recordings.length >= 2) {
+      const timer = setTimeout(captureImage, 150);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordings, open]);
 
   const buildText = () => {
     const lines = recordings.map((r, i) => {
@@ -60,12 +72,25 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
 
   const handleCopy = async () => {
     const text = buildText();
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({ title: "Comparison copied!" });
-    } catch {
-      toast({ title: "Copy failed", variant: "destructive" });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast({ title: "Comparison copied!" });
+        return;
+      } catch {}
     }
+    // Fallback for restricted browsers
+    if (textAreaRef.current) {
+      textAreaRef.current.focus();
+      textAreaRef.current.select();
+      textAreaRef.current.setSelectionRange(0, text.length);
+      try {
+        document.execCommand("copy");
+        toast({ title: "Comparison copied!" });
+        return;
+      } catch {}
+    }
+    toast({ title: "Copy failed — press and hold the text", variant: "destructive" });
   };
 
   const handleDownload = () => {
@@ -138,6 +163,7 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
         </p>
 
         <textarea
+          ref={textAreaRef}
           readOnly
           value={buildText()}
           className="w-full h-20 text-xs bg-background border border-input rounded-md p-2 resize-none font-mono cursor-text mb-3"
@@ -156,8 +182,7 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
             <button
               type="button"
               onClick={handleNativeShare}
-              disabled={!imgBlob}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent"
             >
               <Share2 className="w-4 h-4" /> Share
             </button>

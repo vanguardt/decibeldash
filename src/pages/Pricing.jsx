@@ -28,11 +28,19 @@ const PRO_FEATURES = [
   "Ad-free experience",
 ];
 
-// PayPal payment links — funds go to roger@roger-thornton.com
-const PAYPAL_LINKS = {
-  lifetime: "https://www.paypal.com/paypalme/rogerthornton/9.99",
-  monthly: "https://www.paypal.com/paypalme/rogerthornton/2.99",
+// PayPal checkout — funds go to roger@roger-thornton.com
+// After payment, PayPal redirects back to /payment-success which auto-generates & emails the code
+const PAYPAL_CONFIG = {
+  business: "roger@roger-thornton.com",
+  lifetime: { amount: "9.99", itemName: "DecibelDash Pro - Lifetime" },
+  monthly: { amount: "2.99", itemName: "DecibelDash Pro - Monthly" },
 };
+
+function buildPayPalUrl(type) {
+  const cfg = PAYPAL_CONFIG[type];
+  const returnUrl = encodeURIComponent(`${window.location.origin}/payment-success?type=${type}`);
+  return `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${PAYPAL_CONFIG.business}&amount=${cfg.amount}&item_name=${encodeURIComponent(cfg.itemName)}&currency_code=USD&return=${returnUrl}`;
+}
 
 export default function Pricing() {
   const { isPro, subType, redeemCode } = useSubscription();
@@ -67,7 +75,7 @@ export default function Pricing() {
   };
 
   const handlePayPal = (type) => {
-    window.open(PAYPAL_LINKS[type], "_blank");
+    window.location.href = buildPayPalUrl(type);
   };
 
   return (

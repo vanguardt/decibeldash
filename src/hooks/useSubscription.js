@@ -22,7 +22,10 @@ export function useSubscription() {
 
   const refresh = useCallback(async () => {
     try {
-      const response = await base44.functions.invoke("getSubscriptionStatus", {});
+      const user = await base44.auth.me();
+      const response = await base44.functions.invoke("getSubscriptionStatus", {
+        user_id: user?.id,
+      });
       setTier(response.data?.subscription_tier || "free");
       setSubType(response.data?.subscription_type || null);
     } catch {
@@ -52,19 +55,18 @@ export function useSubscription() {
     const trimmed = code.trim();
     if (!trimmed) throw new Error("Please enter a code");
 
-    // Backend validates the code and marks it as used
-    const response = await base44.functions.invoke("redeemUnlockCode", { code: trimmed });
+    const user = await base44.auth.me();
+    if (!user) throw new Error("Please log in to redeem a code");
+
+    // Backend validates code, marks it used, and updates subscription via service role
+    const response = await base44.functions.invoke("redeemUnlockCode", {
+      code: trimmed,
+      user_id: user.id,
+    });
     const data = response.data;
     if (!data || data.success === false || data.error) {
       throw new Error(data?.error || "Invalid code");
     }
-
-    // Frontend updates the user's own subscription (User entity can't be updated via backend)
-    const type = data.tier_type || "lifetime";
-    await base44.auth.updateMe({
-      subscription_tier: "pro",
-      subscription_type: type,
-    });
 
     // Refresh from DB to get the authoritative state
     await refresh();

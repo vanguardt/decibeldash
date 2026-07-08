@@ -3,13 +3,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ success: false, error: 'Authentication required' });
 
     const body = await req.json();
     const code = body?.code;
+    const userId = body?.user_id;
+
     if (!code || !code.trim()) {
       return Response.json({ success: false, error: 'Please enter a code' });
+    }
+    if (!userId) {
+      return Response.json({ success: false, error: 'Authentication required' });
     }
 
     const normalizedCode = code.trim().toUpperCase();
@@ -31,16 +34,20 @@ Deno.serve(async (req) => {
     // Mark the code as used
     await base44.asServiceRole.entities.UnlockCode.update(unlockCode.id, {
       used: true,
-      redeemed_by_id: user.id,
+      redeemed_by_id: userId,
     });
 
-    // Return the tier type — the frontend will call updateMe() to set the subscription
+    // Update the user's subscription directly via service role
     const tierType = unlockCode.tier_type || 'lifetime';
+    await base44.asServiceRole.entities.User.update(userId, {
+      subscription_tier: 'pro',
+      subscription_type: tierType,
+    });
 
     return Response.json({
       success: true,
       tier_type: tierType,
-      message: 'Code verified successfully'
+      message: 'Pro activated successfully'
     });
   } catch (error) {
     return Response.json({ success: false, error: error.message });

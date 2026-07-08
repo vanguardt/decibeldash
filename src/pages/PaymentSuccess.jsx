@@ -54,23 +54,22 @@ export default function PaymentSuccess() {
   const handleRedeem = async () => {
     if (!code) return;
     try {
-      const matches = await base44.entities.UnlockCode.filter({ code });
-      if (matches && matches.length > 0) {
-        const unlockCode = matches[0];
-        if (!unlockCode.used) {
-          await base44.entities.UnlockCode.update(unlockCode.id, {
-            used: true,
-            redeemed_by_id: (await base44.auth.me()).id,
-          });
-          await base44.auth.updateMe({
-            subscription_tier: "pro",
-            subscription_type: tierType,
-          });
-          toast({ title: "Pro activated! 👑", description: "All features unlocked." });
-          navigate("/");
-        }
+      const user = await base44.auth.me();
+      if (!user) {
+        toast({ title: "Please log in to activate", variant: "destructive" });
+        return;
       }
-    } catch {
+      const response = await base44.functions.invoke("redeemUnlockCode", {
+        code,
+        user_id: user.id,
+      });
+      const data = response.data;
+      if (!data || data.success === false || data.error) {
+        throw new Error(data?.error || "Could not activate");
+      }
+      toast({ title: "Pro activated! 👑", description: "All features unlocked." });
+      navigate("/");
+    } catch (err) {
       toast({ title: "Could not activate automatically", description: "Enter the code on the Pricing page.", variant: "destructive" });
     }
   };

@@ -3,9 +3,11 @@ import { Crown, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
+  const { refresh } = useSubscription();
   const urlParams = new URLSearchParams(window.location.search);
   const planType = urlParams.get("type") || "lifetime";
   const sessionId = urlParams.get("session_id");
@@ -22,6 +24,7 @@ export default function PaymentSuccess() {
         const data = response.data;
 
         if (data?.activated) {
+          await refresh();
           setStatus("success");
           setMessage(`Pro ${planType} is now active on your account. Enjoy full access!`);
         } else {

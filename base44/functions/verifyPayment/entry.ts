@@ -25,24 +25,29 @@ Deno.serve(async (req) => {
     const userEmail = session.customer_email || session.customer_details?.email || session.metadata?.user_email;
     const userId = session.client_reference_id || session.metadata?.user_id;
 
-    // Try to find the user by ID first, then by email
-    let updated = false;
+    console.log('verifyPayment:', { sessionId, tierType, userEmail, userId });
 
-    if (userId) {
-      try {
-        await base44.asServiceRole.entities.User.update(userId, {
+    // 1. Try auth.updateMe — this is what getSubscriptionStatus reads from
+    let updated = false;
+    try {
+      const currentUser = await base44.auth.me();
+      if (currentUser) {
+        console.log('Updating via auth.updateMe for user:', currentUser.id);
+        await base44.auth.updateMe({
           subscription_tier: 'pro',
           subscription_type: tierType,
         });
         updated = true;
-      } catch (e) {
-        console.error('Update by user_id failed:', e.message);
       }
+    } catch (e) {
+      console.log('auth.updateMe failed:', e.message);
     }
 
+    // 2. If not logged in, try matching by email via service role
     if (!updated && userEmail) {
       const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
       if (users && users.length > 0) {
+        console.log('Updating by email:', users[0].id);
         await base44.asServiceRole.entities.User.update(users[0].id, {
           subscription_tier: 'pro',
           subscription_type: tierType,
@@ -51,19 +56,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Also try the currently authenticated user
-    if (!updated) {
+    // 3. Try by userId from metadata
+    if (!updated && userId) {
       try {
-        const currentUser = await base44.auth.me();
-        if (currentUser) {
-          await base44.auth.updateMe({
-            subscription_tier: 'pro',
-            subscription_type: tierType,
-          });
-          updated = true;
-        }
+        await base44.asServiceRole.entities.User.update(userId, {
+          subscription_tier: 'pro',
+          subscription_type: tierType,
+        });
+        updated = true;
       } catch (e) {
-        console.error('No authenticated user to update:', e.message);
+        console.error('Update by user_id failed:', e.message);
       }
     }
 

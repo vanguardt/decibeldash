@@ -23,6 +23,15 @@
       "type": "string",
       "description": "User ID who redeemed this code"
     },
+    "purchaser_email": {
+      "type": "string",
+      "description": "Email address of the purchaser to receive the code"
+    },
+    "emailed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the code has been emailed to the purchaser"
+    },
     "created_by": {
       "type": "string",
       "description": "Admin or system that generated this code"

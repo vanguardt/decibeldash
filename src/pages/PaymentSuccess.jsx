@@ -5,14 +5,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-function generateCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const seg1 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  const seg2 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  const seg3 = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-  return `DD-PRO-${seg1}-${seg2}-${seg3}`;
-}
-
 export default function PaymentSuccess() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -37,25 +29,11 @@ export default function PaymentSuccess() {
         }
         setEmail(user.email);
 
-        // Generate a unique code
-        const newCode = generateCode();
+        // Generate code via backend function (workflow auto-emails it)
+        const response = await base44.functions.invoke("generateUnlockCode", { tier_type: type });
+        if (response.data?.error) throw new Error(response.data.error);
 
-        // Save it to the database
-        await base44.entities.UnlockCode.create({
-          code: newCode,
-          tier_type: type,
-          used: false,
-          redeemed_by_id: user.id,
-        });
-
-        // Email it to the user
-        await base44.integrations.Core.SendEmail({
-          to: user.email,
-          subject: "Your DecibelDash Pro Unlock Code",
-          body: `Thank you for purchasing DecibelDash Pro (${type})!\n\nYour unlock code is:\n\n${newCode}\n\nOpen the DecibelDash app, go to the Pricing page, and enter this code to activate Pro.\n\nEnjoy!`,
-        });
-
-        setCode(newCode);
+        setCode(response.data.code);
       } catch (err) {
         setError("Something went wrong generating your code. Please contact support.");
       } finally {

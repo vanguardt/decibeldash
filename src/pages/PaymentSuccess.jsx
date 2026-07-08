@@ -13,33 +13,22 @@ export default function PaymentSuccess() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const checkStatus = async () => {
-      // The webhook fires instantly on payment completion.
-      // Give it a moment, then check subscription status.
-      await new Promise((r) => setTimeout(r, 2000));
-
+    const verify = async () => {
       try {
-        const response = await base44.functions.invoke("getSubscriptionStatus", {});
-        const tier = response.data?.subscription_tier;
+        // Directly verify via Stripe session — most reliable
+        const response = await base44.functions.invoke("verifyPayment", {
+          session_id: sessionId,
+        });
+        const data = response.data;
 
-        if (tier === "pro") {
+        if (data?.activated) {
           setStatus("success");
-          setMessage(
-            `Pro ${planType} is now active on your account. Enjoy full access!`
-          );
+          setMessage(`Pro ${planType} is now active on your account. Enjoy full access!`);
         } else {
-          // Webhook may still be processing — retry once more
-          await new Promise((r) => setTimeout(r, 3000));
-          const retry = await base44.functions.invoke("getSubscriptionStatus", {});
-          if (retry.data?.subscription_tier === "pro") {
-            setStatus("success");
-            setMessage(`Pro ${planType} is now active on your account. Enjoy full access!`);
-          } else {
-            setStatus("pending");
-            setMessage(
-              "Your payment was received! Pro access is being activated. Refresh this page in a few seconds, or check your Settings page."
-            );
-          }
+          setStatus("pending");
+          setMessage(
+            "Your payment was received! Pro access is being activated. Refresh this page in a few seconds, or check your Settings page."
+          );
         }
       } catch {
         setStatus("pending");
@@ -49,7 +38,7 @@ export default function PaymentSuccess() {
       }
     };
 
-    checkStatus();
+    verify();
   }, []);
 
   return (

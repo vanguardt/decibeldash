@@ -25,26 +25,30 @@ Deno.serve(async (req) => {
       const userEmail = session.customer_email || session.metadata?.user_email || session.customer_details?.email;
       const userId = session.client_reference_id || session.metadata?.user_id;
       const tierType = session.metadata?.tier_type || 'lifetime';
+      const updateData = { subscription_tier: 'pro', subscription_type: tierType };
 
-      // Try updating by user_id first, then fall back to email lookup
+      console.log('Webhook processing:', { userId, userEmail, tierType });
+
+      // Try updating by user_id first
       if (userId) {
         try {
-          await base44.asServiceRole.entities.User.update(userId, {
-            subscription_tier: 'pro',
-            subscription_type: tierType,
-          });
+          await base44.asServiceRole.entities.User.update(userId, updateData);
+          console.log('Updated by user_id:', userId);
         } catch (e) {
-          console.error('Failed to update by user_id, trying email:', e.message);
+          console.error('Failed to update by user_id:', e.message);
         }
       }
 
+      // Fall back to email lookup
       if (userEmail) {
-        const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
-        if (users && users.length > 0) {
-          await base44.asServiceRole.entities.User.update(users[0].id, {
-            subscription_tier: 'pro',
-            subscription_type: tierType,
-          });
+        try {
+          const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+          if (users && users.length > 0) {
+            await base44.asServiceRole.entities.User.update(users[0].id, updateData);
+            console.log('Updated by email:', users[0].id);
+          }
+        } catch (e) {
+          console.error('Failed to update by email:', e.message);
         }
       }
     }

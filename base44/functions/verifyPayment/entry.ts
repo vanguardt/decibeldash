@@ -27,45 +27,48 @@ Deno.serve(async (req) => {
 
     console.log('verifyPayment:', { sessionId, tierType, userEmail, userId });
 
-    // 1. Try auth.updateMe — this is what getSubscriptionStatus reads from
     let updated = false;
-    try {
-      const currentUser = await base44.auth.me();
-      if (currentUser) {
-        console.log('Updating via auth.updateMe for user:', currentUser.id);
-        await base44.auth.updateMe({
-          subscription_tier: 'pro',
-          subscription_type: tierType,
-        });
-        updated = true;
-      }
-    } catch (e) {
-      console.log('auth.updateMe failed:', e.message);
-    }
+    const updateData = {
+      subscription_tier: 'pro',
+      subscription_type: tierType,
+    };
 
-    // 2. If not logged in, try matching by email via service role
-    if (!updated && userEmail) {
-      const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
-      if (users && users.length > 0) {
-        console.log('Updating by email:', users[0].id);
-        await base44.asServiceRole.entities.User.update(users[0].id, {
-          subscription_tier: 'pro',
-          subscription_type: tierType,
-        });
-        updated = true;
+    // 1. If user is authenticated, get their ID and update directly via service role
+    if (!updated) {
+      try {
+        const currentUser = await base44.auth.me();
+        if (currentUser?.id) {
+          console.log('Updating user via service role:', currentUser.id);
+          await base44.asServiceRole.entities.User.update(currentUser.id, updateData);
+          updated = true;
+        }
+      } catch (e) {
+        console.log('No authenticated user:', e.message);
       }
     }
 
-    // 3. Try by userId from metadata
+    // 2. Fall back to userId from Stripe session metadata
     if (!updated && userId) {
       try {
-        await base44.asServiceRole.entities.User.update(userId, {
-          subscription_tier: 'pro',
-          subscription_type: tierType,
-        });
+        console.log('Updating by user_id from metadata:', userId);
+        await base44.asServiceRole.entities.User.update(userId, updateData);
         updated = true;
       } catch (e) {
         console.error('Update by user_id failed:', e.message);
+      }
+    }
+
+    // 3. Fall back to email lookup
+    if (!updated && userEmail) {
+      try {
+        const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+        if (users && users.length > 0) {
+          console.log('Updating by email:', users[0].id);
+          await base44.asServiceRole.entities.User.update(users[0].id, updateData);
+          updated = true;
+        }
+      } catch (e) {
+        console.error('Update by email failed:', e.message);
       }
     }
 

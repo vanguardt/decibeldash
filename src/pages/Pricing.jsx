@@ -45,25 +45,17 @@ export default function Pricing() {
       return;
     }
 
-    if (!user?.email) {
-      toast({
-        title: "Login required",
-        description: "Redirecting you to login...",
-      });
-      setTimeout(() => {
-        base44.auth.redirectToLogin(window.location.href);
-      }, 800);
-      return;
-    }
-
     setLoading(planType);
     try {
-      const response = await base44.functions.invoke("stripeCheckout", {
+      const payload = {
         plan_type: planType,
-        email: user.email,
-        user_id: user.id,
         origin: window.location.origin,
-      });
+      };
+      if (user?.email) {
+        payload.email = user.email;
+        payload.user_id = user.id;
+      }
+      const response = await base44.functions.invoke("stripeCheckout", payload);
       const data = response.data;
       if (data?.url) {
         window.location.href = data.url;

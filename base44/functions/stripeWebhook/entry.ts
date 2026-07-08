@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userEmail = session.customer_email || session.metadata?.user_email;
+      const userEmail = session.customer_email || session.metadata?.user_email || session.customer_details?.email;
       const userId = session.client_reference_id || session.metadata?.user_id;
       const tierType = session.metadata?.tier_type || 'lifetime';
 

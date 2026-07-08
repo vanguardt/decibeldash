@@ -11,15 +11,11 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
     const planType = body?.plan_type;
-    const userEmail = body?.email;
-    const userId = body?.user_id;
+    const userEmail = body?.email || null;
+    const userId = body?.user_id || null;
 
     if (!planType || !PRICE_MAP[planType]) {
       return Response.json({ error: 'Invalid plan type' }, { status: 400 });
-    }
-
-    if (!userEmail) {
-      return Response.json({ error: 'Email is required' }, { status: 400 });
     }
 
     const config = PRICE_MAP[planType];
@@ -36,15 +32,17 @@ Deno.serve(async (req) => {
       line_items: [{ price: config.price_id, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      customer_email: userEmail,
       metadata: {
         base44_app_id: Deno.env.get('BASE44_APP_ID') || '',
-        user_email: userEmail,
         tier_type: config.tier_type,
         plan_type: planType,
       },
     };
 
+    if (userEmail) {
+      sessionParams.customer_email = userEmail;
+      sessionParams.metadata.user_email = userEmail;
+    }
     if (userId) {
       sessionParams.client_reference_id = userId;
       sessionParams.metadata.user_id = userId;

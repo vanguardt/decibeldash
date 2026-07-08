@@ -307,8 +307,8 @@ export default function Home() {
     setMeteringStarted(false);
     setIsRecording(false);
 
-    // No keystroke happened → nothing to save
-    if (!wasMetering || samplesRef.current.length === 0) {
+    // If the user never typed (metering never started), nothing to save
+    if (!wasMetering) {
       resetRecording();
       return;
     }

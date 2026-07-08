@@ -74,6 +74,7 @@ export default function Home() {
   const currentDbRef = useRef(0);
   const recentPeakRef = useRef(0);
   const keyStatsRef = useRef({});
+  const stoppedRef = useRef(false);
   const [liveHeatmap, setLiveHeatmap] = useState({});
 
   const calculateDecibels = useCallback((analyser) => {
@@ -131,6 +132,7 @@ export default function Home() {
   };
 
   const startRecording = async () => {
+    stoppedRef.current = false;
     // Free tier recording limit check
     if (!isPro) {
       try {
@@ -282,6 +284,12 @@ export default function Home() {
   };
 
   const stopRecording = () => {
+    // Guard against double-invocation — the TypingTest timer can fire
+    // onComplete a second time after the user already stopped, which would
+    // hit the early-return path and wipe the save form.
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     if (timerRef.current) clearInterval(timerRef.current);
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {

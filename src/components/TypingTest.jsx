@@ -74,9 +74,10 @@ export default function TypingTest({
     };
   }, [startTime, completed]);
 
-  // 30s countdown
+  // 30s countdown — stops when recording ends to prevent a stale
+  // onComplete call that would wipe the save form after the user stopped.
   useEffect(() => {
-    if (!startTime || completed) return;
+    if (!startTime || completed || !isRecording) return;
     const interval = setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       const remaining = Math.max(0, TYPING_DURATION - elapsed);
@@ -96,7 +97,7 @@ export default function TypingTest({
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [startTime, completed, passage]);
+  }, [startTime, completed, passage, isRecording]);
 
   const handleInput = (e) => {
     if (!isRecording || completed) return;

@@ -4,22 +4,18 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const body = await req.json().catch(() => ({}));
-    const userId = body?.user_id;
-
-    if (!userId) {
+    // Authenticate the user from the request token
+    const user = await base44.auth.me();
+    if (!user) {
       return Response.json({
         subscription_tier: 'free',
         subscription_type: null,
       });
     }
 
-    // Fetch fresh user record from DB using service role (bypasses RLS & stale JWT)
-    const freshUser = await base44.asServiceRole.entities.User.get(userId);
-
     return Response.json({
-      subscription_tier: freshUser?.subscription_tier || 'free',
-      subscription_type: freshUser?.subscription_type || null,
+      subscription_tier: user.subscription_tier || 'free',
+      subscription_type: user.subscription_type || null,
     });
   } catch (error) {
     return Response.json({

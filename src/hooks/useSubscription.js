@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { useAuth } from "@/lib/AuthContext";
 
 export const FREE_RECORDING_LIMIT = 5;
 export const PLATFORM_FEE_PERCENT = 0.25; // 25% platform, 75% creator
@@ -17,20 +16,13 @@ export const PREMIUM_FEATURES = {
 };
 
 export function useSubscription() {
-  const { user } = useAuth();
   const [tier, setTier] = useState("free");
   const [subType, setSubType] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
     try {
-      const response = await base44.functions.invoke("getSubscriptionStatus", {
-        user_id: user.id,
-      });
+      const response = await base44.functions.invoke("getSubscriptionStatus", {});
       setTier(response.data?.subscription_tier || "free");
       setSubType(response.data?.subscription_type || null);
     } catch {
@@ -38,7 +30,7 @@ export function useSubscription() {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -60,13 +52,9 @@ export function useSubscription() {
     const trimmed = code.trim();
     if (!trimmed) throw new Error("Please enter a code");
 
-    const currentUser = await base44.auth.me();
-    if (!currentUser) throw new Error("Please log in to redeem a code");
-
-    // Backend validates code, marks it used, and updates subscription via service role
+    // Backend authenticates via token, validates code, and marks it used
     const response = await base44.functions.invoke("redeemUnlockCode", {
       code: trimmed,
-      user_id: currentUser.id,
     });
     const data = response.data;
     if (!data || data.success === false || data.error) {

@@ -17,6 +17,7 @@ export default function TypingTest({
   onFirstKeystroke,
   onComplete,
   onKeystroke,
+  onStop,
 }) {
   const [passage, setPassage] = useState("");
   const [typed, setTyped] = useState("");
@@ -31,6 +32,11 @@ export default function TypingTest({
   const typedRef = useRef("");
   const startTimeRef = useRef(null);
   const completedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  const onWpmUpdateRef = useRef(onWpmUpdate);
+
+  onCompleteRef.current = onComplete;
+  onWpmUpdateRef.current = onWpmUpdate;
 
   const computeAccuracy = (value) => {
     let correct = 0;
@@ -85,12 +91,12 @@ export default function TypingTest({
         const finalWpm = Math.round(typedRef.current.length / 5 / elapsedMin);
         const acc = computeAccuracy(typedRef.current);
         setWpm(finalWpm);
-        onWpmUpdate?.(finalWpm, acc);
-        onComplete?.();
+        onWpmUpdateRef.current?.(finalWpm, acc);
+        onCompleteRef.current?.();
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [startTime, completed, passage, onWpmUpdate, onComplete]);
+  }, [startTime, completed, passage]);
 
   const handleInput = (e) => {
     if (!isRecording || completed) return;
@@ -137,8 +143,8 @@ export default function TypingTest({
       );
       const finalWpm = Math.round(value.length / 5 / elapsedMin);
       setWpm(finalWpm);
-      onWpmUpdate?.(finalWpm, acc);
-      onComplete?.();
+      onWpmUpdateRef.current?.(finalWpm, acc);
+      onCompleteRef.current?.();
     }
   };
 
@@ -175,6 +181,15 @@ export default function TypingTest({
             <span className="text-sm font-mono font-bold text-primary">
               {wpm} WPM
             </span>
+          )}
+          {isRecording && !completed && onStop && (
+            <button
+              onClick={onStop}
+              className="flex items-center gap-1 text-[10px] font-semibold text-destructive hover:text-destructive/80"
+            >
+              <span className="w-2 h-2 rounded-sm bg-destructive" />
+              Stop
+            </button>
           )}
         </div>
       </div>

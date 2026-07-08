@@ -546,6 +546,7 @@ export default function Home() {
             isRecording={isRecording}
             onFirstKeystroke={beginMetering}
             onComplete={stopRecording}
+            onStop={stopRecording}
             onKeystroke={handleKeystroke}
             onWpmUpdate={(newWpm, acc) => {
               setWpm(newWpm);

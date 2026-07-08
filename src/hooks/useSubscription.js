@@ -59,12 +59,14 @@ export function useSubscription() {
   const redeemCode = useCallback(async (code) => {
     const trimmed = code.trim();
     if (!trimmed) throw new Error("Please enter a code");
-    if (!user?.id) throw new Error("Please log in to redeem a code");
+
+    const currentUser = await base44.auth.me();
+    if (!currentUser) throw new Error("Please log in to redeem a code");
 
     // Backend validates code, marks it used, and updates subscription via service role
     const response = await base44.functions.invoke("redeemUnlockCode", {
       code: trimmed,
-      user_id: user.id,
+      user_id: currentUser.id,
     });
     const data = response.data;
     if (!data || data.success === false || data.error) {
@@ -73,7 +75,7 @@ export function useSubscription() {
 
     // Refresh from DB to get the authoritative state
     await refresh();
-  }, [user?.id, refresh]);
+  }, [refresh]);
 
   const downgrade = useCallback(async () => {
     await base44.auth.updateMe({

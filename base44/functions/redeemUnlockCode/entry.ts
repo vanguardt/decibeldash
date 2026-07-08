@@ -7,6 +7,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { code } = await req.json();
+    console.log('redeemUnlockCode called with code:', code, 'user:', user?.id);
     if (!code || !code.trim()) {
       return Response.json({ success: false, error: 'Please enter a code' });
     }
@@ -15,6 +16,8 @@ Deno.serve(async (req) => {
     const matches = await base44.asServiceRole.entities.UnlockCode.filter({
       code: code.trim()
     });
+
+    console.log('matches found:', matches?.length);
 
     if (!matches || matches.length === 0) {
       return Response.json({ success: false, error: 'Invalid code' });
@@ -38,12 +41,15 @@ Deno.serve(async (req) => {
       subscription_type: tierType,
     });
 
+    console.log('User upgraded to pro:', user.id);
+
     return Response.json({
       success: true,
       tier_type: tierType,
       message: 'Pro activated successfully'
     });
   } catch (error) {
+    console.error('redeemUnlockCode error:', error.message, error.stack);
     return Response.json({ success: false, error: error.message });
   }
 });

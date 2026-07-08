@@ -106,9 +106,6 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
 
-  const hasNativeShare = typeof navigator.share === "function";
-  const canShareFiles = typeof navigator.canShare === "function" && typeof ClipboardItem !== "undefined";
-
   const handleCopyImage = async () => {
     if (!imgBlob) return;
     try {
@@ -118,30 +115,6 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
       toast({ title: "Image copied — paste anywhere!" });
     } catch {
       toast({ title: "Can't copy image in this browser", description: "Use Save to download instead", variant: "destructive" });
-    }
-  };
-
-  const handleNativeShare = async () => {
-    const text = buildText();
-    // On desktop browsers navigator.share with files isn't supported —
-    // copy the image to clipboard so the user can paste it anywhere.
-    if (!canShareFiles && imgBlob) {
-      await handleCopyImage();
-      return;
-    }
-    if (imgBlob && typeof navigator.canShare === "function") {
-      const file = new File([imgBlob], "decibeldash-comparison.png", { type: "image/png" });
-      if (navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: "Keyboard Sound Comparison", text, files: [file] });
-          return;
-        } catch {}
-      }
-    }
-    if (hasNativeShare) {
-      try {
-        await navigator.share({ title: "Keyboard Sound Comparison", text });
-      } catch {}
     }
   };
 
@@ -206,15 +179,6 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
           >
             <ImageIcon className="w-4 h-4" /> Copy Img
           </button>
-          {hasNativeShare && (
-            <button
-              type="button"
-              onClick={handleNativeShare}
-              className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent"
-            >
-              <Share2 className="w-4 h-4" /> Share
-            </button>
-          )}
           <button
             type="button"
             onClick={handleDownload}

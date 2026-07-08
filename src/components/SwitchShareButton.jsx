@@ -205,31 +205,6 @@ export default function SwitchShareButton({ switchEntry }) {
     }
   };
 
-  const hasNativeShare = typeof navigator.share === "function";
-  const canShareFiles = typeof navigator.canShare === "function" && typeof ClipboardItem !== "undefined";
-
-  const handleNativeShare = async () => {
-    const text = buildText();
-    if (!canShareFiles && imgBlob) {
-      await handleCopyImage();
-      return;
-    }
-    if (imgBlob && typeof navigator.canShare === "function") {
-      const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
-      if (navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title: switchEntry.name, text, files: [file] });
-          return;
-        } catch {}
-      }
-    }
-    if (hasNativeShare) {
-      try {
-        await navigator.share({ title: switchEntry.name, text });
-      } catch {}
-    }
-  };
-
   return (
     <>
       <button
@@ -295,15 +270,6 @@ export default function SwitchShareButton({ switchEntry }) {
               >
                 <ImageIcon className="w-4 h-4" /> Copy Img
               </button>
-              {hasNativeShare && (
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent"
-                >
-                  <Share2 className="w-4 h-4" /> Share
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => { if (imgBlob) downloadBlob(imgBlob, `${safeName()}.png`); }}

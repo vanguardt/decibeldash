@@ -48,6 +48,37 @@ export function useSubscription() {
     setSubType(type);
   }, []);
 
+  const redeemCode = useCallback(async (code) => {
+    // Look up the code in the UnlockCode entity
+    const trimmed = code.trim();
+    if (!trimmed) throw new Error("Please enter a code");
+
+    const matches = await base44.entities.UnlockCode.filter({ code: trimmed });
+    if (!matches || matches.length === 0) {
+      throw new Error("Invalid code");
+    }
+
+    const unlockCode = matches[0];
+    if (unlockCode.used) {
+      throw new Error("This code has already been used");
+    }
+
+    // Mark the code as used
+    await base44.entities.UnlockCode.update(unlockCode.id, {
+      used: true,
+      redeemed_by_id: (await base44.auth.me()).id,
+    });
+
+    // Upgrade the user's tier based on the code's tier_type
+    const type = unlockCode.tier_type || "lifetime";
+    await base44.auth.updateMe({
+      subscription_tier: "pro",
+      subscription_type: type,
+    });
+    setTier("pro");
+    setSubType(type);
+  }, []);
+
   const downgrade = useCallback(async () => {
     await base44.auth.updateMe({
       subscription_tier: "free",
@@ -79,6 +110,7 @@ export function useSubscription() {
     loading,
     refresh,
     upgrade,
+    redeemCode,
     downgrade,
     hasFeature,
     canRecord,

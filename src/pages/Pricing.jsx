@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { Check, Crown, Zap, Loader2 } from "lucide-react";
+import { Check, Crown, Zap, Loader2, KeyRound, ExternalLink } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const FREE_FEATURES = [
   "Basic sound recording",
@@ -26,26 +28,46 @@ const PRO_FEATURES = [
   "Ad-free experience",
 ];
 
+// Replace with your actual PayPal payment links
+const PAYPAL_LINKS = {
+  lifetime: "https://www.paypal.com/checkoutnow?amount=9.99",
+  monthly: "https://www.paypal.com/checkoutnow?amount=2.99",
+};
+
 export default function Pricing() {
-  const { isPro, subType, upgrade, loading } = useSubscription();
+  const { isPro, subType, redeemCode } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [processing, setProcessing] = useState(null); // "monthly" | "lifetime" | null
+  const [unlockCode, setUnlockCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
 
-  const handleUpgrade = async (type) => {
-    setProcessing(type);
+  const handleRedeem = async () => {
+    if (!unlockCode.trim()) {
+      toast({ title: "Please enter your unlock code", variant: "destructive" });
+      return;
+    }
+    setRedeeming(true);
     try {
-      await upgrade(type);
+      await redeemCode(unlockCode);
       toast({
         title: "Welcome to Pro! 👑",
-        description: type === "lifetime" ? "Lifetime access unlocked" : "Pro subscription active",
+        description: "Your unlock code was accepted — Pro is now active.",
       });
+      setUnlockCode("");
       navigate("/");
-    } catch {
-      toast({ title: "Upgrade failed", variant: "destructive" });
+    } catch (err) {
+      toast({
+        title: "Invalid code",
+        description: err.message || "Please check your code and try again.",
+        variant: "destructive",
+      });
     } finally {
-      setProcessing(null);
+      setRedeeming(false);
     }
+  };
+
+  const handlePayPal = (type) => {
+    window.open(PAYPAL_LINKS[type], "_blank");
   };
 
   return (
@@ -91,68 +113,91 @@ export default function Pricing() {
         </div>
       </div>
 
-      {/* Pro tier */}
+      {/* Pro tier — PayPal purchase */}
       {!isPro && (
-        <div className="bg-primary/5 border-2 border-primary/30 rounded-2xl p-5 mb-4 relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
-            BEST VALUE
-          </div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-1.5">
-                <Crown className="w-4 h-4 text-primary" />
-                <h2 className="text-sm font-semibold">Pro</h2>
-              </div>
-              <p className="text-xs text-muted-foreground">Full access</p>
+        <>
+          <div className="bg-primary/5 border-2 border-primary/30 rounded-2xl p-5 mb-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-lg">
+              BEST VALUE
             </div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <Crown className="w-4 h-4 text-primary" />
+                  <h2 className="text-sm font-semibold">Pro</h2>
+                </div>
+                <p className="text-xs text-muted-foreground">Full access</p>
+              </div>
+            </div>
+
+            {/* Lifetime via PayPal */}
+            <button
+              onClick={() => handlePayPal("lifetime")}
+              className="w-full bg-primary text-primary-foreground rounded-xl p-4 mb-3 text-left hover:bg-primary/90 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold">Lifetime</p>
+                  <p className="text-[10px] opacity-80">One-time payment via PayPal</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">$9.99</p>
+                    <p className="text-[10px] opacity-80">forever</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 opacity-70" />
+                </div>
+              </div>
+            </button>
+
+            {/* Monthly via PayPal */}
+            <button
+              onClick={() => handlePayPal("monthly")}
+              className="w-full border border-primary/30 rounded-xl p-4 text-left hover:bg-primary/5 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold">Monthly</p>
+                  <p className="text-[10px] text-muted-foreground">Cancel anytime</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">$2.99</p>
+                    <p className="text-[10px] text-muted-foreground">/month</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 opacity-50" />
+                </div>
+              </div>
+            </button>
           </div>
 
-          {/* Lifetime */}
-          <button
-            onClick={() => handleUpgrade("lifetime")}
-            disabled={processing !== null}
-            className="w-full bg-primary text-primary-foreground rounded-xl p-4 mb-3 text-left hover:bg-primary/90 transition-colors disabled:opacity-60"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold">Lifetime</p>
-                <p className="text-[10px] opacity-80">One-time payment</p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold">$9.99</p>
-                <p className="text-[10px] opacity-80">forever</p>
-              </div>
+          {/* Unlock code redemption */}
+          <div className="bg-card border border-border rounded-2xl p-5 mb-4">
+            <div className="flex items-center gap-1.5 mb-2">
+              <KeyRound className="w-4 h-4 text-primary" />
+              <h2 className="text-sm font-semibold">Enter Unlock Code</h2>
             </div>
-            {processing === "lifetime" && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs">
-                <Loader2 className="w-3 h-3 animate-spin" /> Processing...
-              </div>
-            )}
-          </button>
-
-          {/* Monthly */}
-          <button
-            onClick={() => handleUpgrade("monthly")}
-            disabled={processing !== null}
-            className="w-full border border-primary/30 rounded-xl p-4 text-left hover:bg-primary/5 transition-colors disabled:opacity-60"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold">Monthly</p>
-                <p className="text-[10px] text-muted-foreground">Cancel anytime</p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold">$2.99</p>
-                <p className="text-[10px] text-muted-foreground">/month</p>
-              </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Already purchased? You'll receive a unique unlock code after PayPal checkout. Enter it below to activate Pro.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. DD-PRO-LIFE-XXXXXX"
+                value={unlockCode}
+                onChange={(e) => setUnlockCode(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleRedeem()}
+                className="bg-background font-mono text-sm"
+              />
+              <Button
+                onClick={handleRedeem}
+                disabled={redeeming}
+                className="shrink-0"
+              >
+                {redeeming ? <Loader2 className="w-4 h-4 animate-spin" /> : "Unlock"}
+              </Button>
             </div>
-            {processing === "monthly" && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Loader2 className="w-3 h-3 animate-spin" /> Processing...
-              </div>
-            )}
-          </button>
-        </div>
+          </div>
+        </>
       )}
 
       {/* Pro feature list */}
@@ -171,7 +216,7 @@ export default function Pricing() {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center mt-4">
-        Payments are processed securely. Cancel anytime.
+        Payments processed via PayPal. After purchase you'll receive a unique unlock code by email to activate Pro.
       </p>
     </div>
   );

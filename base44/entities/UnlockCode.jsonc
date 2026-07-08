@@ -1,0 +1,35 @@
+{
+  "name": "UnlockCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Unique unlock code string (e.g. DD-PRO-LIFE-XXXXXX)"
+    },
+    "tier_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "lifetime"
+      ],
+      "description": "Which Pro tier this code unlocks"
+    },
+    "used": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this code has been redeemed"
+    },
+    "redeemed_by_id": {
+      "type": "string",
+      "description": "User ID who redeemed this code"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Admin or system that generated this code"
+    }
+  },
+  "required": [
+    "code",
+    "tier_type"
+  ]
+}

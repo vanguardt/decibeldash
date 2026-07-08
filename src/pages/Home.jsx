@@ -6,6 +6,7 @@ import SmartSuggestions from "@/components/SmartSuggestions";
 import AcousticInsights from "@/components/AcousticInsights";
 import AcousticProfileSummary from "@/components/AcousticProfileSummary";
 import CreatorSpotlight from "@/components/CreatorSpotlight";
+import OnboardingWalkthrough from "@/components/OnboardingWalkthrough";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +22,8 @@ import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 
 export default function Home() {
   const { toast } = useToast();
-  const { behavior, streak, suggestions, trackRecording, trackBuild } = useUserBehavior();
+  const { behavior, streak, suggestions, trackRecording, trackBuild, completeOnboarding } = useUserBehavior();
+  const [showOnboarding, setShowOnboarding] = useState(!behavior.onboardingCompleted);
   const [isRecording, setIsRecording] = useState(false);
   const [currentDb, setCurrentDb] = useState(0);
   const [peakDb, setPeakDb] = useState(0);
@@ -450,6 +452,17 @@ export default function Home() {
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
+
+  if (showOnboarding) {
+    return (
+      <OnboardingWalkthrough
+        onComplete={() => {
+          completeOnboarding();
+          setShowOnboarding(false);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-8 max-w-lg mx-auto">

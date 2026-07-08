@@ -40,6 +40,7 @@ function getDefaultBehavior() {
     bestWpm: 0,
     visitDates: [],
     achievements: [],
+    onboardingCompleted: false,
   };
 }
 
@@ -194,6 +195,10 @@ export function useUserBehavior() {
 
   const dismissAchievement = useCallback(() => pushAchievement(null), []);
 
+  const completeOnboarding = useCallback(() => {
+    applyAndCheck((prev) => ({ ...prev, onboardingCompleted: true }));
+  }, []);
+
   const streak = useMemo(
     () => computeStreak(behavior.visitDates),
     [behavior.visitDates]
@@ -266,5 +271,6 @@ export function useUserBehavior() {
     trackFeatureVisit,
     trackRecording,
     trackBuild,
+    completeOnboarding,
   };
 }

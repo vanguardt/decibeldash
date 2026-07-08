@@ -4,20 +4,20 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return Response.json({ success: false, error: 'Authentication required' });
 
-    const { code } = await req.json();
-    console.log('redeemUnlockCode called with code:', code, 'user:', user?.id);
+    const body = await req.json();
+    const code = body?.code;
     if (!code || !code.trim()) {
       return Response.json({ success: false, error: 'Please enter a code' });
     }
 
+    const normalizedCode = code.trim().toUpperCase();
+
     // Look up the code using service role (bypasses RLS)
     const matches = await base44.asServiceRole.entities.UnlockCode.filter({
-      code: code.trim()
+      code: normalizedCode
     });
-
-    console.log('matches found:', matches?.length);
 
     if (!matches || matches.length === 0) {
       return Response.json({ success: false, error: 'Invalid code' });
@@ -34,14 +34,12 @@ Deno.serve(async (req) => {
       redeemed_by_id: user.id,
     });
 
-    // Upgrade the user's tier directly in DB (bypasses stale JWT token issue)
+    // Upgrade the user's tier directly in DB
     const tierType = unlockCode.tier_type || 'lifetime';
     await base44.asServiceRole.entities.User.update(user.id, {
       subscription_tier: 'pro',
       subscription_type: tierType,
     });
-
-    console.log('User upgraded to pro:', user.id);
 
     return Response.json({
       success: true,
@@ -49,7 +47,6 @@ Deno.serve(async (req) => {
       message: 'Pro activated successfully'
     });
   } catch (error) {
-    console.error('redeemUnlockCode error:', error.message, error.stack);
     return Response.json({ success: false, error: error.message });
   }
 });

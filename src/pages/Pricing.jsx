@@ -48,9 +48,11 @@ export default function Pricing() {
     if (!user?.email) {
       toast({
         title: "Login required",
-        description: "Please log in to purchase Pro.",
-        variant: "destructive",
+        description: "Redirecting you to login...",
       });
+      setTimeout(() => {
+        base44.auth.redirectToLogin(window.location.href);
+      }, 800);
       return;
     }
 

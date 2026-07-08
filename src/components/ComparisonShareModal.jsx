@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Share2, X, Download, Clipboard, Loader2 } from "lucide-react";
+import { Share2, X, Download, Clipboard, Loader2, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ComparisonShareModal({ targetRef, recordings, open, onClose }) {
@@ -24,7 +24,7 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(targetRef.current, {
-        backgroundColor: "#00000000",
+        backgroundColor: "#0b1f1a",
         scale: 2,
         useCORS: true,
         logging: false,
@@ -107,9 +107,28 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
   };
 
   const hasNativeShare = typeof navigator.share === "function";
+  const canShareFiles = typeof navigator.canShare === "function" && typeof ClipboardItem !== "undefined";
+
+  const handleCopyImage = async () => {
+    if (!imgBlob) return;
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": imgBlob }),
+      ]);
+      toast({ title: "Image copied — paste anywhere!" });
+    } catch {
+      toast({ title: "Can't copy image in this browser", description: "Use Save to download instead", variant: "destructive" });
+    }
+  };
 
   const handleNativeShare = async () => {
     const text = buildText();
+    // On desktop browsers navigator.share with files isn't supported —
+    // copy the image to clipboard so the user can paste it anywhere.
+    if (!canShareFiles && imgBlob) {
+      await handleCopyImage();
+      return;
+    }
     if (imgBlob && typeof navigator.canShare === "function") {
       const file = new File([imgBlob], "decibeldash-comparison.png", { type: "image/png" });
       if (navigator.canShare({ files: [file] })) {
@@ -178,6 +197,14 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
             className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
           >
             <Clipboard className="w-4 h-4" /> Copy
+          </button>
+          <button
+            type="button"
+            onClick={handleCopyImage}
+            disabled={!imgBlob}
+            className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent disabled:opacity-50"
+          >
+            <ImageIcon className="w-4 h-4" /> Copy Img
           </button>
           {hasNativeShare && (
             <button

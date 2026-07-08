@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Share2, X, Download, Clipboard } from "lucide-react";
+import { Share2, X, Download, Clipboard, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { makeStatsImage } from "@/lib/statsCard";
 
@@ -95,10 +95,29 @@ export default function ShareButton({ recording, className, onShare, onDownload 
   };
 
   const hasNativeShare = typeof navigator.share === "function";
+  const canShareFiles = typeof navigator.canShare === "function" && typeof ClipboardItem !== "undefined";
+
+  const handleCopyImage = async () => {
+    if (!imgBlob) return;
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": imgBlob }),
+      ]);
+      toast({ title: "Image copied — paste anywhere!" });
+    } catch {
+      toast({ title: "Can't copy image in this browser", description: "Use Save to download instead", variant: "destructive" });
+    }
+  };
 
   const handleNativeShare = async () => {
     if (onShare) onShare();
     const text = buildText();
+    // On desktop browsers navigator.share with files isn't supported —
+    // copy the image to clipboard so the user can paste it anywhere.
+    if (!canShareFiles && imgBlob) {
+      await handleCopyImage();
+      return;
+    }
     if (imgBlob && typeof navigator.canShare === "function") {
       const file = new File([imgBlob], `${safeName()}.png`, { type: "image/png" });
       if (navigator.canShare({ files: [file] })) {
@@ -173,6 +192,14 @@ export default function ShareButton({ recording, className, onShare, onDownload 
                 className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
               >
                 <Clipboard className="w-4 h-4" /> Copy
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyImage}
+                disabled={!imgBlob}
+                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-md border border-input text-sm font-medium hover:bg-accent disabled:opacity-50"
+              >
+                <ImageIcon className="w-4 h-4" /> Copy Img
               </button>
               {hasNativeShare && (
                 <button

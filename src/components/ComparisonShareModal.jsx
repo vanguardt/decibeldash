@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Share2, X, Download, Clipboard, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -127,9 +128,9 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
@@ -197,6 +198,7 @@ export default function ComparisonShareModal({ targetRef, recordings, open, onCl
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

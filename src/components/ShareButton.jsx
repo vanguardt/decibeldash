@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Share2, X, Download, Clipboard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { makeStatsImage } from "@/lib/statsCard";
@@ -14,6 +15,7 @@ export default function ShareButton({ recording, className, onShare, onDownload 
   // Pre-generate the stats card image so it's ready when the button is tapped.
   useEffect(() => {
     let cancelled = false;
+    setImgError(false);
     makeStatsImage(recording)
       .then((b) => { if (!cancelled) setImgBlob(b); })
       .catch(() => { if (!cancelled) setImgError(true); });
@@ -124,9 +126,9 @@ export default function ShareButton({ recording, className, onShare, onDownload 
         <Share2 className="w-3.5 h-3.5" />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-4"
           onClick={() => setOpen(false)}
         >
           <div
@@ -190,7 +192,8 @@ export default function ShareButton({ recording, className, onShare, onDownload 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useOutlet } from "react-router-dom";
-import { Mic, List, GitCompare, Trophy, Dices, Layers, Boxes, Settings as SettingsIcon, Sparkles, Clapperboard } from "lucide-react";
+import { Mic, List, GitCompare, Trophy, Dices, Layers, Boxes, Settings as SettingsIcon, Sparkles, Clapperboard, ShoppingBag, Crown } from "lucide-react";
 import Header from "@/components/Header";
 import { useUserBehavior } from "@/hooks/useUserBehavior";
 import AchievementToast from "@/components/AchievementToast";
@@ -16,6 +16,8 @@ const PATH_TO_FEATURE = {
   "/recommend": "recommend",
   "/creator": "creator",
   "/settings": "settings",
+  "/marketplace": "marketplace",
+  "/pricing": "pricing",
 };
 
 const navItems = [
@@ -24,14 +26,16 @@ const navItems = [
   { path: "/compare", icon: GitCompare, label: "Compare" },
   { path: "/switches", icon: Layers, label: "Switches" },
   { path: "/builds", icon: Boxes, label: "Builds" },
+  { path: "/marketplace", icon: ShoppingBag, label: "Shop" },
   { path: "/rankings", icon: Trophy, label: "Ranks" },
   { path: "/roulette", icon: Dices, label: "Roulette" },
   { path: "/recommend", icon: Sparkles, label: "Recommends" },
   { path: "/creator", icon: Clapperboard, label: "Creator" },
+  { path: "/pricing", icon: Crown, label: "Pro" },
   { path: "/settings", icon: SettingsIcon, label: "Settings" },
 ];
 
-const keepAlivePaths = ["/", "/recordings", "/compare", "/switches", "/builds", "/rankings", "/roulette", "/recommend", "/creator"];
+const keepAlivePaths = ["/", "/recordings", "/compare", "/switches", "/builds", "/marketplace", "/rankings", "/roulette", "/recommend", "/creator"];
 
 function KeepAliveOutlet() {
   const location = useLocation();

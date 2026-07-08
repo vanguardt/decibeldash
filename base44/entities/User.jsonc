@@ -7,6 +7,23 @@
         "admin",
         "user"
       ]
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "pro"
+      ],
+      "default": "free",
+      "description": "Subscription tier"
+    },
+    "subscription_type": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "lifetime"
+      ],
+      "description": "Subscription payment type"
     }
   },
   "required": [

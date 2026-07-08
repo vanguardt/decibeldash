@@ -8,9 +8,12 @@ import ComparisonChart from "@/components/ComparisonChart";
 import AudioUploader from "@/components/AudioUploader";
 import ModComparison from "@/components/ModComparison";
 import BuildProfileComparison from "@/components/BuildProfileComparison";
+import AdBanner from "@/components/AdBanner";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export default function Compare() {
   const { toast } = useToast();
+  const { isPro } = useSubscription();
   const [recordings, setRecordings] = useState([]);
   const [builds, setBuilds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,8 +43,9 @@ export default function Compare() {
   }, []);
 
   const toggleSelect = (id) => {
+    const maxSelect = isPro ? 6 : 2;
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : prev.length >= 6 ? prev : [...prev, id]
+      prev.includes(id) ? prev.filter((s) => s !== id) : prev.length >= maxSelect ? prev : [...prev, id]
     );
   };
 
@@ -175,7 +179,7 @@ export default function Compare() {
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full">
                   <Check className="w-3 h-3" />
-                  {selected.length} selected
+                  {selected.length}/{isPro ? 6 : 2} selected
                 </div>
                 {selected.length > 0 && (
                   <button
@@ -186,6 +190,15 @@ export default function Compare() {
                   </button>
                 )}
               </div>
+
+              {/* Upgrade prompt for free users at limit */}
+              {!isPro && selected.length >= 2 && (
+                <div className="bg-primary/5 border border-dashed border-primary/20 rounded-lg p-3 mb-4 text-center">
+                  <p className="text-xs text-muted-foreground">
+                    Free plan: 2 recordings max. <a href="/pricing" className="text-primary font-medium">Go Pro</a> for up to 6.
+                  </p>
+                </div>
+              )}
 
               {/* Comparison chart */}
               {selectedRecordings.length >= 2 && (
@@ -271,6 +284,12 @@ export default function Compare() {
             ))}
           </div>
         </>
+      )}
+
+      {!isPro && (
+        <div className="mt-8">
+          <AdBanner />
+        </div>
       )}
     </div>
   );

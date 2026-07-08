@@ -1,0 +1,38 @@
+{
+  "name": "Purchase",
+  "type": "object",
+  "properties": {
+    "listing_id": {
+      "type": "string",
+      "description": "Reference to MarketplaceListing ID"
+    },
+    "listing_title": {
+      "type": "string",
+      "description": "Denormalized listing title"
+    },
+    "listing_type": {
+      "type": "string",
+      "description": "Denormalized listing type"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price paid in USD"
+    },
+    "platform_fee": {
+      "type": "number",
+      "description": "Platform's share (20-30%)"
+    },
+    "creator_payout": {
+      "type": "number",
+      "description": "Creator's share after platform fee"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Creator display name at time of purchase"
+    }
+  },
+  "required": [
+    "listing_id",
+    "listing_title"
+  ]
+}

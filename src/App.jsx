@@ -19,6 +19,8 @@ import SwitchDetail from '@/pages/SwitchDetail';
 import BuildProfiles from '@/pages/BuildProfiles';
 import BuildProfileDetail from '@/pages/BuildProfileDetail';
 import Settings from '@/pages/Settings';
+import Pricing from '@/pages/Pricing';
+import Marketplace from '@/pages/Marketplace';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -59,6 +61,8 @@ const AuthenticatedApp = () => {
         <Route path="/builds" element={<BuildProfiles />} />
         <Route path="/builds/:id" element={<BuildProfileDetail />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/marketplace" element={<Marketplace />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -7,6 +7,9 @@ import AcousticInsights from "@/components/AcousticInsights";
 import AcousticProfileSummary from "@/components/AcousticProfileSummary";
 import CreatorSpotlight from "@/components/CreatorSpotlight";
 import OnboardingWalkthrough from "@/components/OnboardingWalkthrough";
+import AdBanner from "@/components/AdBanner";
+import PremiumGate from "@/components/PremiumGate";
+import { useSubscription, FREE_RECORDING_LIMIT } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +26,7 @@ import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 export default function Home() {
   const { toast } = useToast();
   const { behavior, streak, suggestions, trackRecording, trackBuild, completeOnboarding } = useUserBehavior();
+  const { isPro } = useSubscription();
   const [showOnboarding, setShowOnboarding] = useState(!behavior.onboardingCompleted);
   const [isRecording, setIsRecording] = useState(false);
   const [currentDb, setCurrentDb] = useState(0);
@@ -127,6 +131,23 @@ export default function Home() {
   };
 
   const startRecording = async () => {
+    // Free tier recording limit check
+    if (!isPro) {
+      try {
+        const existing = await base44.entities.SoundRecording.list("-created_date", FREE_RECORDING_LIMIT + 1);
+        if (existing.length >= FREE_RECORDING_LIMIT) {
+          toast({
+            title: "Recording limit reached",
+            description: `Free plan allows ${FREE_RECORDING_LIMIT} recordings. Upgrade for unlimited.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch {
+        // If count check fails, allow recording
+      }
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -632,9 +653,13 @@ export default function Home() {
         )}
       </div>
 
-      {/* Acoustic profile summary — metrics from your recording history */}
+      {/* Acoustic profile summary — Pro feature */}
       {!isRecording && !showSaveForm && (
-        <AcousticProfileSummary wpmHistory={behavior.wpmHistory} />
+        isPro ? (
+          <AcousticProfileSummary wpmHistory={behavior.wpmHistory} />
+        ) : (
+          <PremiumGate featureLabel="Acoustic Profile Analysis" compact />
+        )
       )}
 
       {/* Creator spotlight — tier, build of the week, rising creator */}
@@ -642,18 +667,33 @@ export default function Home() {
         <CreatorSpotlight />
       )}
 
-      {/* Personalized coaching insights */}
+      {/* Personalized coaching insights — Pro feature */}
       {!isRecording && !showSaveForm && (
-        <AcousticInsights wpmHistory={behavior.wpmHistory} />
+        isPro ? (
+          <AcousticInsights wpmHistory={behavior.wpmHistory} />
+        ) : (
+          <PremiumGate featureLabel="Acoustic Coaching Insights" compact />
+        )
       )}
 
-      {/* Smart suggestions — at the bottom */}
+      {/* Smart suggestions — Pro feature */}
       {!isRecording && !showSaveForm && (
-        <SmartSuggestions
-          suggestions={suggestions}
-          streak={streak}
-          onQuickRecord={handleQuickRecord}
-        />
+        isPro ? (
+          <SmartSuggestions
+            suggestions={suggestions}
+            streak={streak}
+            onQuickRecord={handleQuickRecord}
+          />
+        ) : (
+          <PremiumGate featureLabel="Smart Recommendations" compact />
+        )
+      )}
+
+      {/* Ad banner for free users */}
+      {!isRecording && !showSaveForm && !isPro && (
+        <div className="w-full mt-4">
+          <AdBanner />
+        </div>
       )}
 
       {/* Permission denied */}

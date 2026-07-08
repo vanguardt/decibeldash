@@ -8,9 +8,12 @@ import { AnimatePresence } from "framer-motion";
 import MobileSelect from "@/components/ui/mobile-select";
 import PullToRefresh from "@/components/PullToRefresh";
 import RecordingCard from "@/components/RecordingCard";
+import AdBanner from "@/components/AdBanner";
+import { useSubscription, FREE_RECORDING_LIMIT } from "@/hooks/useSubscription";
 
 export default function Recordings() {
   const { toast } = useToast();
+  const { isPro } = useSubscription();
   const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -59,7 +62,11 @@ export default function Recordings() {
     <PullToRefresh onRefresh={loadRecordings}>
       <div className="min-h-screen px-4 py-8 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold tracking-tight mb-1">Recordings</h1>
-        <p className="text-xs text-muted-foreground mb-6">All your saved sound measurements</p>
+        <p className="text-xs text-muted-foreground mb-6">
+          {isPro
+            ? "All your saved sound measurements"
+            : `${recordings.length}/${FREE_RECORDING_LIMIT} recordings used`}
+        </p>
 
       {/* Search & Filters */}
       <div className="space-y-3 mb-6">
@@ -125,6 +132,11 @@ export default function Recordings() {
           </AnimatePresence>
         </div>
       )}
+      {!isPro && (
+          <div className="mt-6">
+            <AdBanner />
+          </div>
+        )}
       </div>
     </PullToRefresh>
   );

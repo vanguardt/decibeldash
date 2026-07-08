@@ -1,0 +1,64 @@
+{
+  "name": "MarketplaceListing",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Listing title"
+    },
+    "description": {
+      "type": "string",
+      "description": "What's included and what it achieves"
+    },
+    "listing_type": {
+      "type": "string",
+      "enum": [
+        "build_pack",
+        "template",
+        "sound_signature_pack",
+        "comparison_bundle"
+      ],
+      "description": "Type of marketplace item"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "Price in USD (0 = free)"
+    },
+    "creator_name": {
+      "type": "string",
+      "description": "Display name of the creator"
+    },
+    "content_ids": {
+      "type": "string",
+      "description": "JSON string of entity IDs included in this listing"
+    },
+    "cover_color": {
+      "type": "string",
+      "description": "Hex color for the listing cover"
+    },
+    "tags": {
+      "type": "string",
+      "description": "Comma-separated tags (e.g. thock, silent, linear)"
+    },
+    "download_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total downloads/purchases"
+    },
+    "rating": {
+      "type": "number",
+      "default": 0,
+      "description": "Average rating 0-5"
+    },
+    "rating_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of ratings"
+    }
+  },
+  "required": [
+    "title",
+    "listing_type"
+  ]
+}

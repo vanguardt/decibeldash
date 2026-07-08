@@ -6,6 +6,7 @@ import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import SoundTestSubmit from "@/components/SoundTestSubmit";
 import FrequencySpectrum from "@/components/FrequencySpectrum";
 import AddSwitchForm from "@/components/AddSwitchForm";
+import SwitchShareButton from "@/components/SwitchShareButton";
 import { useAuth } from "@/lib/AuthContext";
 
 const TYPE_COLORS = {
@@ -83,14 +84,17 @@ export default function SwitchDetail() {
             <p className="text-sm text-muted-foreground">{switchEntry.manufacturer}</p>
           )}
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => setShowEdit(true)}
-            className="shrink-0 flex items-center gap-1 text-xs text-primary font-medium px-2.5 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5"
-          >
-            <Pencil className="w-3.5 h-3.5" /> Edit
-          </button>
-        )}
+        <div className="shrink-0 flex items-center gap-2">
+          <SwitchShareButton switchEntry={switchEntry} />
+          {isAdmin && (
+            <button
+              onClick={() => setShowEdit(true)}
+              className="flex items-center gap-1 text-xs text-primary font-medium px-2.5 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/5"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Badges */}

@@ -4,10 +4,12 @@ import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function PaymentSuccess() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState(null);
   const [tierType, setTierType] = useState("lifetime");
@@ -21,7 +23,6 @@ export default function PaymentSuccess() {
 
     const generateAndSend = async () => {
       try {
-        const user = await base44.auth.me();
         if (!user || !user.email) {
           setError("Please log in to receive your unlock code.");
           setLoading(false);
@@ -41,8 +42,8 @@ export default function PaymentSuccess() {
       }
     };
 
-    generateAndSend();
-  }, []);
+    if (user) generateAndSend();
+  }, [user]);
 
   const handleCopy = () => {
     if (!code) return;
@@ -54,8 +55,7 @@ export default function PaymentSuccess() {
   const handleRedeem = async () => {
     if (!code) return;
     try {
-      const user = await base44.auth.me();
-      if (!user) {
+      if (!user?.id) {
         toast({ title: "Please log in to activate", variant: "destructive" });
         return;
       }

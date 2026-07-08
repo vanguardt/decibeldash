@@ -52,16 +52,23 @@ export function useSubscription() {
     const trimmed = code.trim();
     if (!trimmed) throw new Error("Please enter a code");
 
+    // Backend validates the code and marks it as used
     const response = await base44.functions.invoke("redeemUnlockCode", { code: trimmed });
     const data = response.data;
     if (!data || data.success === false || data.error) {
       throw new Error(data?.error || "Invalid code");
     }
 
+    // Frontend updates the user's own subscription (User entity can't be updated via backend)
     const type = data.tier_type || "lifetime";
-    setTier("pro");
-    setSubType(type);
-  }, []);
+    await base44.auth.updateMe({
+      subscription_tier: "pro",
+      subscription_type: type,
+    });
+
+    // Refresh from DB to get the authoritative state
+    await refresh();
+  }, [refresh]);
 
   const downgrade = useCallback(async () => {
     await base44.auth.updateMe({

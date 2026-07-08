@@ -28,10 +28,10 @@ const PRO_FEATURES = [
   "Ad-free experience",
 ];
 
-// Replace with your actual PayPal payment links
+// PayPal payment links — funds go to roger@roger-thornton.com
 const PAYPAL_LINKS = {
-  lifetime: "https://www.paypal.com/checkoutnow?amount=9.99",
-  monthly: "https://www.paypal.com/checkoutnow?amount=2.99",
+  lifetime: "https://www.paypal.com/paypalme/rogerthornton/9.99",
+  monthly: "https://www.paypal.com/paypalme/rogerthornton/2.99",
 };
 
 export default function Pricing() {

@@ -22,18 +22,30 @@ Deno.serve(async (req) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
+      const userEmail = session.customer_email || session.metadata?.user_email;
       const userId = session.client_reference_id || session.metadata?.user_id;
       const tierType = session.metadata?.tier_type || 'lifetime';
 
+      // Try updating by user_id first, then fall back to email lookup
       if (userId) {
-        const subscriptionTier = 'pro';
-        const subscriptionType = tierType;
+        try {
+          await base44.asServiceRole.entities.User.update(userId, {
+            subscription_tier: 'pro',
+            subscription_type: tierType,
+          });
+        } catch (e) {
+          console.error('Failed to update by user_id, trying email:', e.message);
+        }
+      }
 
-        // Update the user's subscription using service role
-        await base44.asServiceRole.entities.User.update(userId, {
-          subscription_tier: subscriptionTier,
-          subscription_type: subscriptionType,
-        });
+      if (userEmail) {
+        const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+        if (users && users.length > 0) {
+          await base44.asServiceRole.entities.User.update(users[0].id, {
+            subscription_tier: 'pro',
+            subscription_type: tierType,
+          });
+        }
       }
     }
 

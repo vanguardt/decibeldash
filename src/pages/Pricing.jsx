@@ -4,6 +4,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 
 const FREE_FEATURES = [
   "Basic sound recording",
@@ -29,6 +30,7 @@ const PRO_FEATURES = [
 
 export default function Pricing() {
   const { isPro, subType } = useSubscription();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(null);
 
@@ -43,10 +45,21 @@ export default function Pricing() {
       return;
     }
 
+    if (!user?.email) {
+      toast({
+        title: "Login required",
+        description: "Please log in to purchase Pro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(planType);
     try {
       const response = await base44.functions.invoke("stripeCheckout", {
         plan_type: planType,
+        email: user.email,
+        user_id: user.id,
         origin: window.location.origin,
       });
       const data = response.data;

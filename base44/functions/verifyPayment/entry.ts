@@ -23,52 +23,39 @@ Deno.serve(async (req) => {
 
     const tierType = session.metadata?.tier_type || 'lifetime';
     const userEmail = session.customer_email || session.customer_details?.email || session.metadata?.user_email;
-    const userId = session.client_reference_id || session.metadata?.user_id;
 
-    console.log('verifyPayment:', { sessionId, tierType, userEmail, userId });
+    console.log('verifyPayment:', { sessionId, tierType, userEmail });
 
+    // If user is authenticated, update their record via auth.updateMe (persists to DB)
     let updated = false;
-    const updateData = {
-      subscription_tier: 'pro',
-      subscription_type: tierType,
-    };
-
-    // 1. If user is authenticated, get their ID and update directly via service role
-    if (!updated) {
-      try {
-        const currentUser = await base44.auth.me();
-        if (currentUser?.id) {
-          console.log('Updating user via service role:', currentUser.id);
-          await base44.asServiceRole.entities.User.update(currentUser.id, updateData);
-          updated = true;
-        }
-      } catch (e) {
-        console.log('No authenticated user:', e.message);
-      }
-    }
-
-    // 2. Fall back to userId from Stripe session metadata
-    if (!updated && userId) {
-      try {
-        console.log('Updating by user_id from metadata:', userId);
-        await base44.asServiceRole.entities.User.update(userId, updateData);
+    try {
+      const currentUser = await base44.auth.me();
+      if (currentUser?.id) {
+        console.log('Updating via auth.updateMe for user:', currentUser.id);
+        await base44.auth.updateMe({
+          subscription_tier: 'pro',
+          subscription_type: tierType,
+        });
         updated = true;
-      } catch (e) {
-        console.error('Update by user_id failed:', e.message);
       }
+    } catch (e) {
+      console.log('auth.me/updateMe failed:', e.message);
     }
 
-    // 3. Fall back to email lookup
+    // Fallback: update by email via service role (for anonymous checkouts that later register)
     if (!updated && userEmail) {
       try {
         const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
         if (users && users.length > 0) {
-          console.log('Updating by email:', users[0].id);
-          await base44.asServiceRole.entities.User.update(users[0].id, updateData);
+          console.log('Updating via service role by email:', users[0].id);
+          await base44.asServiceRole.entities.User.update(users[0].id, {
+            subscription_tier: 'pro',
+            subscription_type: tierType,
+          });
           updated = true;
         }
       } catch (e) {
-        console.error('Update by email failed:', e.message);
+        console.error('Service role update failed:', e.message);
       }
     }
 
@@ -76,6 +63,7 @@ Deno.serve(async (req) => {
       activated: updated,
       tier_type: tierType,
       email: userEmail,
+      paid: true,
     });
   } catch (error) {
     console.error('Verify payment error:', error);

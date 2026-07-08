@@ -4,13 +4,25 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Authenticate the user from the request token
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({
         subscription_tier: 'free',
         subscription_type: null,
       });
+    }
+
+    // Try reading fresh from DB via service role for reliability
+    try {
+      const dbUser = await base44.asServiceRole.entities.User.get(user.id);
+      if (dbUser) {
+        return Response.json({
+          subscription_tier: dbUser.subscription_tier || 'free',
+          subscription_type: dbUser.subscription_type || null,
+        });
+      }
+    } catch (e) {
+      console.log('Service role read failed, using auth.me data:', e.message);
     }
 
     return Response.json({

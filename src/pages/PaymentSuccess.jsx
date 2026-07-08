@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
   const { refresh } = useSubscription();
+  const { user, checkUserAuth } = useAuth();
   const urlParams = new URLSearchParams(window.location.search);
   const planType = urlParams.get("type") || "lifetime";
   const sessionId = urlParams.get("session_id");
@@ -17,13 +19,29 @@ export default function PaymentSuccess() {
   useEffect(() => {
     const verify = async () => {
       try {
-        // Directly verify via Stripe session — most reliable
         const response = await base44.functions.invoke("verifyPayment", {
           session_id: sessionId,
         });
         const data = response.data;
 
-        if (data?.activated) {
+        if (data?.paid && data?.tier_type) {
+          // Frontend-side update via auth.updateMe — guaranteed to persist
+          try {
+            await base44.auth.updateMe({
+              subscription_tier: "pro",
+              subscription_type: data.tier_type,
+            });
+          } catch (e) {
+            console.log("Frontend auth.updateMe failed:", e.message);
+          }
+
+          // Re-fetch the user from DB so auth context has fresh data
+          try {
+            await checkUserAuth();
+          } catch (e) {
+            console.log("checkUserAuth failed:", e.message);
+          }
+
           await refresh();
           setStatus("success");
           setMessage(`Pro ${planType} is now active on your account. Enjoy full access!`);

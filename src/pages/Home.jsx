@@ -4,6 +4,7 @@ import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 
 import { useUserBehavior } from "@/hooks/useUserBehavior";
 import SmartSuggestions from "@/components/SmartSuggestions";
 import AcousticInsights from "@/components/AcousticInsights";
+import AcousticProfileSummary from "@/components/AcousticProfileSummary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -457,21 +458,7 @@ export default function Home() {
         <p className="text-xs text-muted-foreground">Measure & compare keyboard noise levels</p>
       </div>
 
-      {/* Smart suggestions — adapts to user habits */}
-      {!isRecording && !showSaveForm && (
-        <SmartSuggestions
-          suggestions={suggestions}
-          streak={streak}
-          onQuickRecord={handleQuickRecord}
-        />
-      )}
-
-      {/* Personalized acoustic coaching — analyzes recordings, heatmaps, WPM, and builds */}
-      {!isRecording && !showSaveForm && (
-        <AcousticInsights wpmHistory={behavior.wpmHistory} />
-      )}
-
-      {/* Gauge */}
+      {/* Gauge — meter is the first thing you see */}
       <DecibelGauge value={currentDb} peak={peakDb} isRecording={meteringStarted} />
 
       {/* Mode toggle (only when idle) */}
@@ -629,6 +616,25 @@ export default function Home() {
           </Button>
         )}
       </div>
+
+      {/* Acoustic profile summary — metrics from your recording history */}
+      {!isRecording && !showSaveForm && (
+        <AcousticProfileSummary wpmHistory={behavior.wpmHistory} />
+      )}
+
+      {/* Personalized coaching insights */}
+      {!isRecording && !showSaveForm && (
+        <AcousticInsights wpmHistory={behavior.wpmHistory} />
+      )}
+
+      {/* Smart suggestions — at the bottom */}
+      {!isRecording && !showSaveForm && (
+        <SmartSuggestions
+          suggestions={suggestions}
+          streak={streak}
+          onQuickRecord={handleQuickRecord}
+        />
+      )}
 
       {/* Permission denied */}
       {permissionDenied && (

@@ -139,6 +139,86 @@ export function analyzeWpmTrend(wpmHistory) {
   return { trend: diff > 0 ? "improving" : "declining", recent: recentAvg, diff: Math.abs(diff) };
 }
 
+// --- Scoring Functions ---
+
+export const signatureStyles = {
+  Thock: { label: "Thock", className: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
+  Clack: { label: "Clack", className: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
+  Hollow: { label: "Hollow", className: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  Balanced: { label: "Balanced", className: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" },
+};
+
+export function computeSoundSignature(recordings) {
+  const dbRange = analyzeDbRange(recordings);
+  if (!dbRange) return null;
+
+  const { avg, peak, min } = dbRange;
+  const dynamicRange = peak - min;
+
+  // Hollow: large gap between min and peak → resonant, echoey
+  if (dynamicRange > 20 && min < 42) return "Hollow";
+  // Thock: low avg, deep sound
+  if (avg < 48) return "Thock";
+  // Clack: higher avg, sharp attack
+  if (avg >= 52) return "Clack";
+  // Balanced: moderate everything
+  return "Balanced";
+}
+
+export function computeConsistencyScore(recordings) {
+  const valid = recordings.filter((r) => r.avg_decibels != null);
+  if (valid.length < 2) return null;
+  const avg = valid.reduce((s, r) => s + r.avg_decibels, 0) / valid.length;
+  const variance = valid.reduce((s, r) => s + Math.pow(r.avg_decibels - avg, 2), 0) / valid.length;
+  const stdDev = Math.sqrt(variance);
+  // 0 stdDev = 100, 10+ dB stdDev = 0
+  return Math.max(0, Math.min(100, Math.round(100 - stdDev * 10)));
+}
+
+export function computeModEffectiveness(recordings, builds) {
+  const all = [...recordings, ...builds];
+  const withMods = all.filter((item) => {
+    let mods = [];
+    try { mods = JSON.parse(item.modifications || "[]"); } catch {}
+    return mods.length > 0 && item.avg_decibels != null;
+  });
+  const withoutMods = all.filter((item) => {
+    let mods = [];
+    try { mods = JSON.parse(item.modifications || "[]"); } catch {}
+    return mods.length === 0 && item.avg_decibels != null;
+  });
+  if (withMods.length === 0 || withoutMods.length === 0) return null;
+
+  const avgModded = withMods.reduce((s, r) => s + r.avg_decibels, 0) / withMods.length;
+  const avgUnmodded = withoutMods.reduce((s, r) => s + r.avg_decibels, 0) / withoutMods.length;
+  const reduction = avgUnmodded - avgModded;
+  // 0 dB reduction = 0, 5+ dB = 100
+  const score = Math.max(0, Math.min(100, Math.round((reduction / 5) * 100)));
+  return { score, reduction: Math.round(reduction * 10) / 10 };
+}
+
+export function computeTypingStability(recordings) {
+  const withWpm = recordings.filter((r) => r.wpm && r.wpm > 0);
+  if (withWpm.length < 2) return null;
+
+  const wpms = withWpm.map((r) => r.wpm);
+  const avgWpm = wpms.reduce((s, w) => s + w, 0) / wpms.length;
+  const wpmStdDev = Math.sqrt(wpms.reduce((s, w) => s + Math.pow(w - avgWpm, 2), 0) / wpms.length);
+  const wpmCV = avgWpm > 0 ? wpmStdDev / avgWpm : 0;
+  // CV 0 = perfect, 0.3+ = unstable
+  const wpmScore = Math.max(0, Math.min(100, Math.round(100 - wpmCV * 300)));
+
+  // Accuracy consistency
+  const accs = withWpm.map((r) => r.accuracy).filter((a) => a != null);
+  let accScore = 100;
+  if (accs.length >= 2) {
+    const avgAcc = accs.reduce((s, a) => s + a, 0) / accs.length;
+    const accStdDev = Math.sqrt(accs.reduce((s, a) => s + Math.pow(a - avgAcc, 2), 0) / accs.length);
+    accScore = Math.max(0, Math.min(100, 100 - accStdDev * 5));
+  }
+  return Math.round(wpmScore * 0.6 + accScore * 0.4);
+}
+
 // --- Profile Builder ---
 
 export function buildAcousticProfile(recordings, builds) {
@@ -164,6 +244,10 @@ export function buildAcousticProfile(recordings, builds) {
     quietKeys: findQuietKeys(heatmap),
     modUsage,
     switchUsage,
+    soundSignature: computeSoundSignature(recordings),
+    consistencyScore: computeConsistencyScore(recordings),
+    modEffectiveness: computeModEffectiveness(recordings, builds),
+    typingStability: computeTypingStability(recordings),
   };
 }
 

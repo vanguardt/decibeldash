@@ -1,5 +1,10 @@
-const CACHE_NAME = "decibeldash-v1";
+const CACHE_NAME = "decibeldash-v2";
 const ASSETS = ["/", "/index.html", "/manifest.json"];
+
+// Allow the page to trigger immediate activation
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
+});
 
 // Install — pre-cache the app shell
 self.addEventListener("install", (event) => {
@@ -9,7 +14,7 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Activate — clean up old caches
+// Activate — clean up old caches and take control
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -21,7 +26,8 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch — stale-while-revalidate for navigation requests, network-first for API
+// Fetch — network-first for navigation (always get latest published version),
+// stale-while-revalidate for static assets, network-only for API calls.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
@@ -30,17 +36,23 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  // Skip cross-origin API calls (base44 SDK, Stripe, etc.)
+  // Skip cross-origin requests (base44 SDK API, Stripe, etc.)
   if (url.origin !== self.location.origin) return;
 
-  // Navigation requests → serve cached app shell, fall back to network
+  // Never intercept API calls — always let them go to the network
+  if (url.pathname.startsWith("/api/")) return;
+
+  // Navigation requests → network-first, fall back to cache
   if (request.mode === "navigate") {
     event.respondWith(
-      caches.match("/index.html").then(
-        (cached) =>
-          cached ||
-          fetch(request).catch(() => caches.match("/index.html"))
-      )
+      fetch(request)
+        .then((response) => {
+          // Cache the latest version
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put("/index.html", clone));
+          return response;
+        })
+        .catch(() => caches.match("/index.html"))
     );
     return;
   }

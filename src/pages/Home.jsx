@@ -499,7 +499,7 @@ export default function Home() {
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold tracking-tight mb-2">DecibelDash Keyboard Sound Analyzer</h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Capture keystroke acoustics, visualize frequency behavior, and benchmark your keyboard's performance.
+          Analyze keystroke acoustics, measure decibel output, and benchmark your keyboard's performance.
         </p>
         {!isRecording && !showSaveForm && !meteringStarted && peakDb === 0 && (
           <div className="mt-5 flex flex-col items-center gap-2">
@@ -508,7 +508,7 @@ export default function Home() {
               Analyze Your Keyboard
             </Button>
             <p className="text-xs text-muted-foreground max-w-sm">
-              Advanced decibel monitoring, acoustic profiling, and build-to-build comparisons — all in one tool.
+              Record keystrokes, compare builds, and refine your acoustic signature with precision.
             </p>
           </div>
         )}

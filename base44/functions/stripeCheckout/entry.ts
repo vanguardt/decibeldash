@@ -32,7 +32,9 @@ Deno.serve(async (req) => {
       line_items: [{ price: config.price_id, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      customer_creation: 'always', // Ensures a Stripe customer is always created so we can recover Pro status by email
+      // For one-time payments (lifetime), ensure a customer is created so we
+      // can recover Pro status by email. Subscriptions create one automatically.
+      ...(planType === 'lifetime' ? { customer_creation: 'always' } : {}),
       metadata: {
         base44_app_id: Deno.env.get('BASE44_APP_ID') || '',
         tier_type: config.tier_type,

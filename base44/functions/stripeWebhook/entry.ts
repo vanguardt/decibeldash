@@ -20,16 +20,8 @@ Deno.serve(async (req) => {
       Deno.env.get('STRIPE_WEBHOOK_SECRET')!
     );
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userEmail = session.customer_email || session.metadata?.user_email || session.customer_details?.email;
-      const userId = session.client_reference_id || session.metadata?.user_id;
-      const tierType = session.metadata?.tier_type || 'lifetime';
+    const updateToPro = async (userEmail, userId, tierType = 'lifetime') => {
       const updateData = { subscription_tier: 'pro', subscription_type: tierType };
-
-      console.log('Webhook processing:', { userId, userEmail, tierType });
-
-      // Try updating by user_id first
       if (userId) {
         try {
           await base44.asServiceRole.entities.User.update(userId, updateData);
@@ -38,8 +30,6 @@ Deno.serve(async (req) => {
           console.error('Failed to update by user_id:', e.message);
         }
       }
-
-      // Fall back to email lookup
       if (userEmail) {
         try {
           const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
@@ -51,6 +41,54 @@ Deno.serve(async (req) => {
           console.error('Failed to update by email:', e.message);
         }
       }
+    };
+
+    const downgradeToFree = async (stripeCustomerId) => {
+      if (!stripeCustomerId) return;
+      try {
+        const customers = await base44.asServiceRole.entities.User.filter({ stripe_customer_id: stripeCustomerId });
+        if (customers && customers.length > 0) {
+          await base44.asServiceRole.entities.User.update(customers[0].id, { subscription_tier: 'free', subscription_type: '' });
+          console.log('Downgraded by customer_id:', customers[0].id);
+        }
+      } catch (e) {
+        console.error('Failed to downgrade:', e.message);
+      }
+    };
+
+    console.log('Webhook event received:', event.type);
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userEmail = session.customer_email || session.metadata?.user_email || session.customer_details?.email;
+        const userId = session.client_reference_id || session.metadata?.user_id;
+        const tierType = session.metadata?.tier_type || 'lifetime';
+        await updateToPro(userEmail, userId, tierType);
+        break;
+      }
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice;
+        if (invoice.billing_reason === 'subscription_cycle' || invoice.billing_reason === 'subscription_create') {
+          const userEmail = invoice.customer_email || null;
+          await updateToPro(userEmail, null, 'monthly');
+        }
+        break;
+      }
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription;
+        if (subscription.status === 'canceled' || subscription.status === 'unpaid' || subscription.status === 'expired') {
+          await downgradeToFree(subscription.customer as string);
+        } else if (subscription.status === 'active') {
+          await updateToPro(null, null, 'monthly');
+        }
+        break;
+      }
+      case 'invoice.created':
+      case 'payment_intent.succeeded':
+        // Informational — no user update needed for these
+        console.log('Informational event:', event.type);
+        break;
     }
 
     return Response.json({ received: true });

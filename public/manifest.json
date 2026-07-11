@@ -12,14 +12,14 @@
   "icons": [
     {
       "src": "https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
       "src": "https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
       "purpose": "maskable"
     }
   ]

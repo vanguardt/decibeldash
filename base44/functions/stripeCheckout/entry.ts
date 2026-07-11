@@ -2,8 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import Stripe from 'npm:stripe@16.10.0';
 
 const PRICE_MAP = {
-  monthly: { price_id: 'price_1TqmWALcTIhTuTUMSV8MWLQ8', tier_type: 'monthly' },
-  lifetime: { price_id: 'price_1TqmWALcTIhTuTUMPaianAvf', tier_type: 'lifetime' },
+  lifetime: { price_id: 'price_1TrfDEReNaWmRM9Br5QVvLNK', tier_type: 'lifetime' },
 };
 
 Deno.serve(async (req) => {

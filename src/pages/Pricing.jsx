@@ -160,32 +160,7 @@ export default function Pricing() {
               </div>
             </button>
 
-            {/* Monthly via Stripe */}
-            <button
-              onClick={() => handleCheckout("monthly")}
-              disabled={loading !== null}
-              className="w-full border border-primary/30 rounded-xl p-4 text-left hover:bg-primary/5 transition-colors disabled:opacity-60"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold">
-                    {loading === "monthly" ? "Redirecting..." : "Monthly"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">Cancel anytime</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">$2.99</p>
-                    <p className="text-[10px] text-muted-foreground">/month</p>
-                  </div>
-                  {loading === "monthly" ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <ExternalLink className="w-4 h-4 opacity-50" />
-                  )}
-                </div>
-              </div>
-            </button>
+
           </div>
         </>
       )}

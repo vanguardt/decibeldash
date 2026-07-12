@@ -419,21 +419,23 @@ export default function Home() {
       ? samplesRef.current.reduce((s, sample) => s + sample.db, 0) / samplesRef.current.length
       : currentDb;
 
+    // Capture all ref/state data before reset clears them
     const heatmap = { ...keyStatsRef.current };
+    const samplesCopy = samplesRef.current.slice(0, 500);
+    const peakCopy = peakRef.current;
+    const minCopy = minRef.current === Infinity ? 0 : minRef.current;
     const uploadPromise = pendingUploadRef.current;
+    const capturedName = saveName.trim();
+    const capturedBuildType = saveBuildType;
+    const capturedSwitchType = saveSwitchType.trim();
+    const capturedKeycapProfile = saveKeycapProfile;
+    const capturedMods = { ...saveMods };
+    const capturedNotes = saveNotes.trim();
+    const capturedWpm = wpm;
+    const capturedAccuracy = accuracy;
+    const capturedElapsed = elapsedTime;
 
     resetRecording();
-    toast({ title: "Build profile saved!" });
-    trackBuild();
-    trackRecording({
-      mode: soundOnly ? "soundOnly" : "typing",
-      category: saveCategory,
-      switchType: saveSwitchType,
-      keycapProfile: saveKeycapProfile,
-      mods: saveMods,
-      buildType: saveBuildType,
-      wpm,
-    });
 
     let audioUrl = null;
     if (uploadPromise) {
@@ -442,25 +444,36 @@ export default function Home() {
 
     try {
       await base44.entities.BuildProfile.create({
-        name: saveName.trim(),
-        build_type: saveBuildType,
+        name: capturedName,
+        build_type: capturedBuildType,
         avg_decibels: Math.round(avgDb * 10) / 10,
-        peak_decibels: Math.round(peakRef.current * 10) / 10,
-        min_decibels: minRef.current === Infinity ? 0 : Math.round(minRef.current * 10) / 10,
-        duration_seconds: elapsedTime,
-        notes: saveNotes.trim() || undefined,
-        switch_type: saveSwitchType.trim() || undefined,
-        keycap_profile: saveKeycapProfile || undefined,
+        peak_decibels: Math.round(peakCopy * 10) / 10,
+        min_decibels: Math.round(minCopy * 10) / 10,
+        duration_seconds: capturedElapsed,
+        notes: capturedNotes || undefined,
+        switch_type: capturedSwitchType || undefined,
+        keycap_profile: capturedKeycapProfile || undefined,
         modifications: JSON.stringify(
-          Object.entries(saveMods).filter(([, v]) => v).map(([k]) => k)
+          Object.entries(capturedMods).filter(([, v]) => v).map(([k]) => k)
         ) || undefined,
-        decibel_samples: JSON.stringify(samplesRef.current.slice(0, 500)),
-        wpm: wpm > 0 ? wpm : undefined,
-        accuracy: wpm > 0 ? Math.round(accuracy * 10) / 10 : undefined,
+        decibel_samples: JSON.stringify(samplesCopy),
+        wpm: capturedWpm > 0 ? capturedWpm : undefined,
+        accuracy: capturedWpm > 0 ? Math.round(capturedAccuracy * 10) / 10 : undefined,
         audio_url: audioUrl || undefined,
         key_heatmap: Object.keys(heatmap).length > 0
           ? JSON.stringify(heatmap)
           : undefined,
+      });
+      toast({ title: "Build profile saved!" });
+      trackBuild();
+      trackRecording({
+        mode: soundOnly ? "soundOnly" : "typing",
+        category: saveCategory,
+        switchType: capturedSwitchType,
+        keycapProfile: capturedKeycapProfile,
+        mods: capturedMods,
+        buildType: capturedBuildType,
+        wpm: capturedWpm,
       });
     } catch (err) {
       toast({ title: "Failed to save build", variant: "destructive" });

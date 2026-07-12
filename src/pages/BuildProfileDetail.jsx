@@ -9,6 +9,7 @@ import ModRecommendations from "@/components/ModRecommendations";
 import RecordingCard from "@/components/RecordingCard";
 import SelectRecordingModal from "@/components/SelectRecordingModal";
 import ShareButton from "@/components/ShareButton";
+import SoundProfileBadge from "@/components/SoundProfileBadge";
 import { recordingWithProfile } from "@/lib/soundProfile";
 
 const BUILD_TYPE_STYLES = {
@@ -111,6 +112,7 @@ export default function BuildProfileDetail() {
         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${BUILD_TYPE_STYLES[profile.build_type] || BUILD_TYPE_STYLES.Custom}`}>
           {profile.build_type} Build
         </span>
+        <SoundProfileBadge recording={profile} />
         {profile.switch_type && (
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
             {profile.switch_type}

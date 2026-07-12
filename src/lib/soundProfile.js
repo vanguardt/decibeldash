@@ -16,9 +16,9 @@ export const soundProfile = (r) => {
 };
 
 export const profileStyles = {
-  clacky: { label: "Clacky", className: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
-  thocky: { label: "Thocky", className: "bg-purple-500/15 text-purple-400 border-purple-500/30" },
-  clicky: { label: "Clicky", className: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30" },
-  creamy: { label: "Creamy", className: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
-  marbly: { label: "Marbly", className: "bg-sky-500/15 text-sky-400 border-sky-500/30" },
+  clacky: { label: "Clacky", className: "bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/40" },
+  thocky: { label: "Thocky", className: "bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/40" },
+  clicky: { label: "Clicky", className: "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/40" },
+  creamy: { label: "Creamy", className: "bg-pink-500/20 text-pink-700 dark:text-pink-300 border-pink-500/40" },
+  marbly: { label: "Marbly", className: "bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-500/40" },
 };

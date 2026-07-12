@@ -6,7 +6,7 @@ export default function SoundProfileBadge({ recording }) {
   const style = profileStyles[profile] || profileStyles.thocky;
 
   return (
-    <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${style.className}`}>
+    <span className={`shrink-0 inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full border ${style.className}`}>
       {style.label}
     </span>
   );

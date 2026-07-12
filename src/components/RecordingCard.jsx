@@ -45,7 +45,7 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-semibold text-sm truncate">{recording.name}</h3>
-            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${categoryColors[recording.category] || categoryColors.other}`}>
+            <Badge variant="outline" className={`shrink-0 text-[10px] px-1.5 py-0 ${categoryColors[recording.category] || categoryColors.other}`}>
               {recording.category}
             </Badge>
             <SoundProfileBadge recording={recording} />

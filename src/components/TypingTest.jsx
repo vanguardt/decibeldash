@@ -183,13 +183,13 @@ export default function TypingTest({
               {wpm} WPM
             </span>
           )}
-          {isRecording && !completed && onStop && (
+          {isRecording && !completed && startTime && onStop && (
             <button
               onClick={onStop}
-              className="flex items-center gap-1 text-[10px] font-semibold text-destructive hover:text-destructive/80"
+              className="flex items-center gap-1 text-[11px] font-semibold px-3 py-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              <span className="w-2 h-2 rounded-sm bg-destructive" />
-              Stop
+              <span className="w-2 h-2 rounded-sm bg-primary-foreground" />
+              Finish &amp; Save
             </button>
           )}
         </div>
@@ -240,6 +240,16 @@ export default function TypingTest({
             : "Start recording to type"
         }
       />
+
+      {/* Finish button for when user has typed enough but hasn't completed the passage */}
+      {isRecording && !completed && startTime && typed.length > 0 && (
+        <button
+          onClick={onComplete}
+          className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+        >
+          Finish &amp; Save Recording
+        </button>
+      )}
 
       {/* Stats */}
       {completed && (

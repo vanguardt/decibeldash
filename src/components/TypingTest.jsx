@@ -134,8 +134,8 @@ export default function TypingTest({
       onWpmUpdate?.(currentWpm, acc);
     }
 
-    // Early completion: passage fully typed before 30s
-    if (value === passage && !completedRef.current) {
+    // Early completion: user has typed through the full passage (typos OK)
+    if (value.length >= passage.length && !completedRef.current) {
       completedRef.current = true;
       setCompleted(true);
       const elapsedMin = Math.max(

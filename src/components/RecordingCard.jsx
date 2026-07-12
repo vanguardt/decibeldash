@@ -8,6 +8,7 @@ import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import AudioDownloadButton from "@/components/AudioDownloadButton";
 import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
+import SoundProfileBadge from "@/components/SoundProfileBadge";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -47,6 +48,7 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
             <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${categoryColors[recording.category] || categoryColors.other}`}>
               {recording.category}
             </Badge>
+            <SoundProfileBadge recording={recording} />
           </div>
 
           {recording.notes && (

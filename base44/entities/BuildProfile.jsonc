@@ -89,5 +89,11 @@
   "required": [
     "name",
     "build_type"
-  ]
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": true
+  }
 }

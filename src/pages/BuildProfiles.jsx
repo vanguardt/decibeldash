@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Plus, Volume2, ChevronDown } from "lucide-react";
+import { Loader2, Plus, ChevronDown } from "lucide-react";
 import BuildProfileCard from "@/components/BuildProfileCard";
 
 const LOUDNESS_BANDS = [
@@ -20,7 +20,6 @@ const SORT_OPTIONS = [
 ];
 
 export default function BuildProfiles() {
-  const location = useLocation();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +29,7 @@ export default function BuildProfiles() {
   const [sortBy, setSortBy] = useState("newest");
   const [sortOpen, setSortOpen] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await base44.entities.BuildProfile.list("-updated_date", 200);
@@ -40,12 +39,11 @@ export default function BuildProfiles() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (location.pathname !== "/builds") return;
     load();
-  }, [location.pathname]);
+  }, [load]);
 
   const availableSwitches = useMemo(
     () => ["all", ...new Set(profiles.map((p) => p.switch_type).filter(Boolean))],

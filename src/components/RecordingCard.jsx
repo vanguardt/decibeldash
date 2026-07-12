@@ -9,6 +9,7 @@ import AudioDownloadButton from "@/components/AudioDownloadButton";
 import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 import SoundProfileBadge from "@/components/SoundProfileBadge";
+import SaveAsBuildDialog from "@/components/SaveAsBuildDialog";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -101,6 +102,7 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
               <Grid3x3 className="w-3.5 h-3.5" />
             </button>
           )}
+          <SaveAsBuildDialog recording={recording} />
           <ShareButton recording={recording} />
           {recording.audio_url && (
             <AudioDownloadButton url={recording.audio_url} name={recording.name} />

@@ -66,6 +66,10 @@
       "type": "string",
       "description": "JSON string of per-key dB stats"
     },
+    "recordings": {
+      "type": "string",
+      "description": "JSON string of full recording objects (with soundProfile) attached to this build"
+    },
     "notes": {
       "type": "string",
       "description": "Notes about the build"

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 } from "lucide-react";
 import { useUserBehavior } from "@/hooks/useUserBehavior";
+import { recordingWithProfile } from "@/lib/soundProfile";
 import SmartSuggestions from "@/components/SmartSuggestions";
 import AcousticInsights from "@/components/AcousticInsights";
 import AcousticProfileSummary from "@/components/AcousticProfileSummary";
@@ -444,27 +445,46 @@ export default function Home() {
       try { audioUrl = await uploadPromise; } catch { audioUrl = null; }
     }
 
+    const recordingEntry = recordingWithProfile({
+      id: `local-${Date.now()}`,
+      name: capturedName,
+      avg_decibels: Math.round(avgDb * 10) / 10,
+      peak_decibels: Math.round(peakCopy * 10) / 10,
+      min_decibels: Math.round(minCopy * 10) / 10,
+      duration_seconds: capturedElapsed,
+      notes: capturedNotes || undefined,
+      switch_type: capturedSwitchType || undefined,
+      keycap_profile: capturedKeycapProfile || undefined,
+      modifications: JSON.stringify(
+        Object.entries(capturedMods).filter(([, v]) => v).map(([k]) => k)
+      ) || undefined,
+      decibel_samples: JSON.stringify(samplesCopy),
+      wpm: capturedWpm > 0 ? capturedWpm : undefined,
+      accuracy: capturedWpm > 0 ? Math.round(capturedAccuracy * 10) / 10 : undefined,
+      audio_url: audioUrl || undefined,
+      key_heatmap: Object.keys(heatmap).length > 0
+        ? JSON.stringify(heatmap)
+        : undefined,
+    });
+
     try {
       await base44.entities.BuildProfile.create({
-        name: capturedName,
+        name: recordingEntry.name,
         build_type: capturedBuildType,
-        avg_decibels: Math.round(avgDb * 10) / 10,
-        peak_decibels: Math.round(peakCopy * 10) / 10,
-        min_decibels: Math.round(minCopy * 10) / 10,
-        duration_seconds: capturedElapsed,
-        notes: capturedNotes || undefined,
-        switch_type: capturedSwitchType || undefined,
-        keycap_profile: capturedKeycapProfile || undefined,
-        modifications: JSON.stringify(
-          Object.entries(capturedMods).filter(([, v]) => v).map(([k]) => k)
-        ) || undefined,
-        decibel_samples: JSON.stringify(samplesCopy),
-        wpm: capturedWpm > 0 ? capturedWpm : undefined,
-        accuracy: capturedWpm > 0 ? Math.round(capturedAccuracy * 10) / 10 : undefined,
-        audio_url: audioUrl || undefined,
-        key_heatmap: Object.keys(heatmap).length > 0
-          ? JSON.stringify(heatmap)
-          : undefined,
+        avg_decibels: recordingEntry.avg_decibels,
+        peak_decibels: recordingEntry.peak_decibels,
+        min_decibels: recordingEntry.min_decibels,
+        duration_seconds: recordingEntry.duration_seconds,
+        notes: recordingEntry.notes,
+        switch_type: recordingEntry.switch_type,
+        keycap_profile: recordingEntry.keycap_profile,
+        modifications: recordingEntry.modifications,
+        decibel_samples: recordingEntry.decibel_samples,
+        wpm: recordingEntry.wpm,
+        accuracy: recordingEntry.accuracy,
+        audio_url: recordingEntry.audio_url,
+        key_heatmap: recordingEntry.key_heatmap,
+        recordings: JSON.stringify([recordingEntry]),
       });
       toast({ title: "Build profile saved!" });
       trackBuild();

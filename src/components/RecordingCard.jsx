@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Trash2, Volume2, Clock, ArrowUp, ArrowDown, Minus, Grid3x3 } from "lucide-react";
+import { Trash2, Volume2, Clock, ArrowUp, ArrowDown, Minus, Grid3x3, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -9,7 +9,7 @@ import AudioDownloadButton from "@/components/AudioDownloadButton";
 import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 import SoundProfileBadge from "@/components/SoundProfileBadge";
-import SaveAsBuildDialog from "@/components/SaveAsBuildDialog";
+import AddToBuildDialog from "@/components/AddToBuildDialog";
 
 const categoryColors = {
   mechanical: "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -19,7 +19,7 @@ const categoryColors = {
   other: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
 };
 
-export default function RecordingCard({ recording, onDelete, selected, onSelect }) {
+export default function RecordingCard({ recording, onDelete, onRemove, selected, onSelect }) {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const getColor = (db) => {
     if (db < 30) return "text-green-400";
@@ -102,22 +102,38 @@ export default function RecordingCard({ recording, onDelete, selected, onSelect 
               <Grid3x3 className="w-3.5 h-3.5" />
             </button>
           )}
-          <SaveAsBuildDialog recording={recording} />
-          <ShareButton recording={recording} />
-          {recording.audio_url && (
-            <AudioDownloadButton url={recording.audio_url} name={recording.name} />
+          {onRemove ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(recording.id);
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          ) : (
+            <>
+              <AddToBuildDialog recording={recording} />
+              <ShareButton recording={recording} />
+              {recording.audio_url && (
+                <AudioDownloadButton url={recording.audio_url} name={recording.name} />
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(recording.id);
+                }}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(recording.id);
-            }}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
         </div>
       </div>
 

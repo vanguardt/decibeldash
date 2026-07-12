@@ -6,6 +6,7 @@ import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import ModRecommendations from "@/components/ModRecommendations";
+import RecordingCard from "@/components/RecordingCard";
 import ShareButton from "@/components/ShareButton";
 
 const BUILD_TYPE_STYLES = {
@@ -57,6 +58,21 @@ export default function BuildProfileDetail() {
 
   let mods = [];
   try { mods = JSON.parse(profile.modifications || "[]"); } catch {}
+
+  let recordings = [];
+  try { recordings = JSON.parse(profile.recordings || "[]"); } catch {}
+
+  const removeRecording = async (recId) => {
+    const updated = recordings.filter((r) => r.id !== recId);
+    try {
+      await base44.entities.BuildProfile.update(profile.id, {
+        recordings: JSON.stringify(updated),
+      });
+      setProfile({ ...profile, recordings: JSON.stringify(updated) });
+    } catch {
+      // ignore
+    }
+  };
 
   const rating = profile.responsiveness_rating || 0;
 
@@ -131,6 +147,20 @@ export default function BuildProfileDetail() {
       {profile.audio_url && (
         <div className="bg-card border border-border rounded-lg p-3 mb-4">
           <RecordingAudioPlayer url={profile.audio_url} />
+        </div>
+      )}
+
+      {/* Recordings */}
+      {recordings.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-xs font-semibold mb-2 px-1">
+            Recordings ({recordings.length})
+          </h3>
+          <div className="space-y-2">
+            {recordings.map((r) => (
+              <RecordingCard key={r.id || r.name} recording={r} onRemove={removeRecording} />
+            ))}
+          </div>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 } from "lucide-react";
 import { useUserBehavior } from "@/hooks/useUserBehavior";
@@ -24,6 +25,7 @@ import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 
 export default function Home() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { behavior, streak, suggestions, trackRecording, trackBuild, completeOnboarding } = useUserBehavior();
   const { isPro } = useSubscription();
@@ -475,6 +477,7 @@ export default function Home() {
         buildType: capturedBuildType,
         wpm: capturedWpm,
       });
+      navigate("/builds");
     } catch (err) {
       toast({ title: "Failed to save build", variant: "destructive" });
     }

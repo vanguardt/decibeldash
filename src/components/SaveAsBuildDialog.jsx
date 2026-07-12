@@ -51,11 +51,12 @@ export default function SaveAsBuildDialog({ recording }) {
           e.stopPropagation();
           setOpen(true);
         }}
-        className="flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-accent transition-colors shrink-0"
+        className="flex items-center gap-1 h-7 px-2.5 rounded-md text-[11px] font-medium text-muted-foreground hover:text-primary hover:bg-accent transition-colors shrink-0 border border-border"
         aria-label="Save as build profile"
         title="Save as build profile"
       >
         <Boxes className="w-3.5 h-3.5" />
+        Build
       </button>
     );
   }

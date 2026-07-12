@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Volume2 } from "lucide-react";
+import SoundProfileBadge from "@/components/SoundProfileBadge";
 
 const BUILD_TYPE_STYLES = {
   Silent: "bg-blue-500/15 text-blue-400",
@@ -42,18 +43,19 @@ export default function BuildProfileCard({ profile }) {
           </span>
         )}
       </div>
-      {loudness && (
-        <div className="mt-2 flex items-center gap-1.5">
+      <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+        <SoundProfileBadge recording={profile} />
+        {loudness && (
           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${loudness.cls}`}>
             {loudness.label}
           </span>
-          {profile.wpm > 0 && (
-            <span className="text-[10px] text-muted-foreground">
-              {profile.wpm} WPM
-            </span>
-          )}
-        </div>
-      )}
+        )}
+        {profile.wpm > 0 && (
+          <span className="text-[10px] text-muted-foreground">
+            {profile.wpm} WPM
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

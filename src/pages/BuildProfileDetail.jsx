@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Loader2, Volume2, Gauge, Zap, Star, Keyboard } from "lucide-react";
+import { Loader2, Volume2, Gauge, Zap, Star, Keyboard, Plus } from "lucide-react";
 import DecibelScale from "@/components/DecibelScale";
 import KeyboardHeatmap from "@/components/KeyboardHeatmap";
 import RecordingAudioPlayer from "@/components/RecordingAudioPlayer";
 import ModRecommendations from "@/components/ModRecommendations";
 import RecordingCard from "@/components/RecordingCard";
+import SelectRecordingModal from "@/components/SelectRecordingModal";
 import ShareButton from "@/components/ShareButton";
+import { recordingWithProfile } from "@/lib/soundProfile";
 
 const BUILD_TYPE_STYLES = {
   Silent: "bg-blue-500/15 text-blue-400",
@@ -21,6 +23,7 @@ export default function BuildProfileDetail() {
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showRecordingsModal, setShowRecordingsModal] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -72,6 +75,15 @@ export default function BuildProfileDetail() {
     } catch {
       // ignore
     }
+  };
+
+  const addRecordings = async (newRecordings) => {
+    const entries = newRecordings.map(recordingWithProfile);
+    const updated = [...recordings, ...entries];
+    await base44.entities.BuildProfile.update(profile.id, {
+      recordings: JSON.stringify(updated),
+    });
+    setProfile({ ...profile, recordings: JSON.stringify(updated) });
   };
 
   const rating = profile.responsiveness_rating || 0;
@@ -151,18 +163,47 @@ export default function BuildProfileDetail() {
       )}
 
       {/* Recordings */}
-      {recordings.length > 0 && (
-        <div className="mb-4">
-          <h3 className="text-xs font-semibold mb-2 px-1">
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2 px-1">
+          <h3 className="text-xs font-semibold">
             Recordings ({recordings.length})
           </h3>
+          <button
+            onClick={() => setShowRecordingsModal(true)}
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Recording
+          </button>
+        </div>
+        {recordings.length > 0 ? (
           <div className="space-y-2">
             {recordings.map((r) => (
               <RecordingCard key={r.id || r.name} recording={r} onRemove={removeRecording} />
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-card border border-dashed border-border rounded-xl p-6 text-center">
+            <p className="text-xs text-muted-foreground mb-3">
+              No recordings yet. Add one from your library.
+            </p>
+            <button
+              onClick={() => setShowRecordingsModal(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Browse Recordings
+            </button>
+          </div>
+        )}
+      </div>
+
+      <SelectRecordingModal
+        open={showRecordingsModal}
+        onClose={() => setShowRecordingsModal(false)}
+        onAdd={addRecordings}
+        existingIds={recordings.map((r) => r.id)}
+      />
 
       {/* Mods */}
       {mods.length > 0 && (

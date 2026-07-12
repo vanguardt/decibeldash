@@ -3,6 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Plus, ChevronDown } from "lucide-react";
 import BuildProfileCard from "@/components/BuildProfileCard";
+import { getDominantSoundProfile } from "@/lib/soundProfile";
+
+// Maps build-type filter buttons to sound profile keys.
+// Silent/Thock/Clack filter by dominant soundProfile; Gaming/Custom stay build_type.
+const TYPE_TO_SOUND_PROFILE = {
+  Silent: "silent",
+  Thock: "thocky",
+  Clack: "clacky",
+};
 
 const LOUDNESS_BANDS = [
   { key: "all", label: "All Levels", min: -Infinity, max: Infinity },
@@ -53,7 +62,17 @@ export default function BuildProfiles() {
   const filtered = useMemo(() => {
     const band = LOUDNESS_BANDS.find((b) => b.key === loudnessFilter);
     const result = profiles.filter((p) => {
-      const typeMatch = typeFilter === "all" || p.build_type === typeFilter;
+      let typeMatch;
+      if (typeFilter === "all") {
+        typeMatch = true;
+      } else if (TYPE_TO_SOUND_PROFILE[typeFilter]) {
+        // Filter by dominant sound profile (from recordings or build data)
+        const dominant = getDominantSoundProfile(p);
+        typeMatch = dominant === TYPE_TO_SOUND_PROFILE[typeFilter];
+      } else {
+        // Gaming, Custom — filter by build_type
+        typeMatch = p.build_type === typeFilter;
+      }
       const switchMatch =
         switchFilter === "all" ||
         (p.switch_type || "").toLowerCase() === switchFilter.toLowerCase();

@@ -22,6 +22,7 @@ import Settings from '@/pages/Settings';
 import Pricing from '@/pages/Pricing';
 import Marketplace from '@/pages/Marketplace';
 import PaymentSuccess from '@/pages/PaymentSuccess';
+import Privacy from '@/pages/Privacy';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -75,6 +76,7 @@ const AuthenticatedApp = () => {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/privacy" element={<Privacy />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

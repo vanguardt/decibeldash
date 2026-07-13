@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0fa969" />
+    <meta name="description" content="DecibelDash — Record, store, and compare the acoustic profiles and typing
+speed of mechanical keyboards." />
+    <link rel="manifest" href="/assets/manifest-CvfdzaTU.json" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="apple-touch-icon"
+      href="https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DecibelDash" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta property="og:title" content="DecibelDash" />
+    <meta property="og:description" content="Record, store, and compare the acoustic profiles and typing speed
+of mechanical keyboards." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image"
+      content="https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png" />
+    <title>DecibelDash — Keyboard Sound Analysis</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-100458753"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-100458753');
+    </script>
+    <script type="module" crossorigin src="/assets/index-df7b5UVO.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Qbe6mPiC.css">
+    <script type="module">
+if (window.self === window.top) {
+  let lastPath = "";
+  function getPageNameFromPath(path) {
+    const segments = path.split("/").filter(Boolean);
+    return segments[0] || null;
+  }
+  function trackPageView() {
+    const path = window.location.pathname;
+    if (path === lastPath) return;
+    lastPath = path;
+    const pageName = getPageNameFromPath(path) || "home";
+    const appId = "";
+    if (!appId) return;
+    fetch(`/api/app-logs/${appId}/log-user-in-app/${pageName}`, {
+      method: "POST",
+    }).catch(() => {});
+  }
+  const originalPushState = history.pushState.bind(history);
+  history.pushState = function (...args) {
+    originalPushState(...args);
+    trackPageView();
+  };
+  const originalReplaceState = history.replaceState.bind(history);
+  history.replaceState = function (...args) {
+    originalReplaceState(...args);
+    trackPageView();
+  };
+  window.addEventListener("popstate", trackPageView);
+  trackPageView();
+}
+</script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

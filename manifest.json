@@ -1,0 +1,75 @@
+{
+  "id": "com.decibeldash.app",
+  "name": "DecibelDash",
+  "short_name": "Decibel",
+  "description": "DecibelDash — lightweight audio level monitor and utilities for quick sound checks and logging.",
+  "lang": "en",
+  "dir": "auto",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0fa969",
+  "background_color": "#ffffff",
+  "categories": ["utilities", "audio"],
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Meter",
+      "short_name": "Meter",
+      "description": "Open the live decibel meter",
+      "url": "/meter",
+      "icons": [{ "src": "/icons/shortcut-meter.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "View Logs",
+      "short_name": "Logs",
+      "description": "Open recorded sound logs",
+      "url": "/logs",
+      "icons": [{ "src": "/icons/shortcut-logs.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "screenshots": [
+    { "src": "/screenshots/ss1.png", "sizes": "540x720", "type": "image/png" },
+    { "src": "/screenshots/ss2.png", "sizes": "540x720", "type": "image/png" }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "permissions": [],
+  "serviceworker": {
+    "src": "/sw.js",
+    "scope": "/",
+    "type": "classic"
+  }
+}

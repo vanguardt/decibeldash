@@ -8,6 +8,14 @@
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
+    "screenshots": [
+  {
+    "src": "https://media.base44.com/images/public/6a429912b4bcb40b124c5755/your_screenshot.png",
+    "sizes": "1280x720",
+    "type": "image/png"
+  }
+],
+
     {
       "src": "https://media.base44.com/images/public/6a429912b4bcb40b124c5755/590273c88_generated_image.png",
       "sizes": "512x512",

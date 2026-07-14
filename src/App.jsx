@@ -74,7 +74,7 @@ const AuthenticatedApp = () => {
         <Route path="/builds/:id" element={<BuildProfileDetail />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/marketplace" element={<Marketplace />} />
+       // <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/privacy" element={<Privacy />} />
       </Route>

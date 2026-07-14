@@ -20,7 +20,7 @@ import BuildProfiles from '@/pages/BuildProfiles';
 import BuildProfileDetail from '@/pages/BuildProfileDetail';
 import Settings from '@/pages/Settings';
 import Pricing from '@/pages/Pricing';
-import Marketplace from '@/pages/Marketplace';
+
 import PaymentSuccess from '@/pages/PaymentSuccess';
 import Privacy from '@/pages/Privacy';
 import Login from '@/pages/Login';
@@ -74,7 +74,6 @@ const AuthenticatedApp = () => {
         <Route path="/builds/:id" element={<BuildProfileDetail />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/pricing" element={<Pricing />} />
-       // <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/privacy" element={<Privacy />} />
       </Route>

@@ -129,11 +129,36 @@ export default function SoundCard({ recording, analysis, freqTimeline, compact =
           </div>
         )}
 
+        {/* Signature graph — compact bar chart of the 4 signature metrics */}
+        {!compact && (
+          <div className="bg-background/60 rounded-lg p-2">
+            <p className="text-[9px] uppercase text-muted-foreground mb-1">Sound Signature</p>
+            <div className="space-y-1">
+              {[
+                { label: "Thockiness", value: analysis.metrics?.thockiness ?? 0, color: "bg-purple-500" },
+                { label: "Clackiness", value: analysis.metrics?.clackiness ?? 0, color: "bg-orange-500" },
+                { label: "Deepness", value: analysis.metrics?.deepness ?? 0, color: "bg-violet-500" },
+                { label: "Brightness", value: analysis.metrics?.brightness ?? 0, color: "bg-sky-500" },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-2">
+                  <span className="text-[8px] w-14 text-muted-foreground">{s.label}</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.value}%` }} />
+                  </div>
+                  <span className="text-[8px] font-mono w-5 text-right">{Math.round(s.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <span className="text-[9px] text-muted-foreground">
             {recording?.avg_decibels != null ? `${recording.avg_decibels} dB avg` : ""}
             {recording?.peak_decibels != null ? ` · ${recording.peak_decibels} dB peak` : ""}
+            {recording?.duration_seconds != null ? ` · ${recording.duration_seconds}s` : ""}
+            {recording?.category ? ` · ${recording.category}` : ""}
           </span>
           <span className="text-[9px] text-primary font-semibold">DecibelDash</span>
         </div>

@@ -6,16 +6,25 @@ import AddSwitchForm from "@/components/AddSwitchForm";
 
 export default function SwitchLibrary() {
   const [switches, setSwitches] = useState([]);
+  const [manufacturers, setManufacturers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [manuFilter, setManuFilter] = useState("all");
   const [sort, setSort] = useState("rating");
   const [showAdd, setShowAdd] = useState(false);
 
   const loadSwitches = async () => {
     try {
-      const data = await base44.entities.SwitchEntry.list("-updated_date", 200);
+      const data = await base44.entities.SwitchEntry.list("-updated_date", 500);
       setSwitches(data);
+      // Build manufacturer list with counts from loaded data
+      const counts = data.reduce((acc, s) => {
+        const m = s.manufacturer || "Unknown";
+        acc[m] = (acc[m] || 0) + 1;
+        return acc;
+      }, {});
+      setManufacturers(Object.entries(counts).sort((a, b) => b[1] - a[1]));
     } catch {
       // ignore
     } finally {
@@ -36,6 +45,7 @@ export default function SwitchLibrary() {
         s.manufacturer?.toLowerCase().includes(q)
       );
     })
+    .filter((s) => manuFilter === "all" || s.manufacturer === manuFilter)
     .filter((s) => typeFilter === "all" || s.switch_type === typeFilter)
     .sort((a, b) => {
       if (sort === "rating")
@@ -79,6 +89,17 @@ export default function SwitchLibrary() {
         ))}
         <div className="shrink-0 w-px h-5 bg-border mx-1" />
         <select
+          value={manuFilter}
+          onChange={(e) => setManuFilter(e.target.value)}
+          className="shrink-0 bg-muted text-xs rounded-full px-3 py-1.5 text-muted-foreground focus:outline-none max-w-[140px]"
+        >
+          <option value="all">All Brands</option>
+          {manufacturers.map(([name, count]) => (
+            <option key={name} value={name}>{name} ({count})</option>
+          ))}
+        </select>
+        <div className="shrink-0 w-px h-5 bg-border mx-1" />
+        <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
           className="shrink-0 bg-muted text-xs rounded-full px-3 py-1.5 text-muted-foreground focus:outline-none"
@@ -89,6 +110,12 @@ export default function SwitchLibrary() {
           <option value="name">A–Z</option>
         </select>
       </div>
+
+      {/* Count */}
+      <p className="text-xs text-muted-foreground mb-3">
+        {filtered.length} switch{filtered.length !== 1 ? "es" : ""}
+        {manuFilter !== "all" && ` from ${manuFilter}`}
+      </p>
 
       {/* List */}
       {loading ? (

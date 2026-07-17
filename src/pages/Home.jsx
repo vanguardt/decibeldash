@@ -4,6 +4,10 @@ import { base44 } from "@/api/base44Client";
 import { Mic, Square, Save, Volume2, RotateCcw, Keyboard, Waves, Boxes, Grid3x3 } from "lucide-react";
 import { useUserBehavior } from "@/hooks/useUserBehavior";
 import { recordingWithProfile } from "@/lib/soundProfile";
+import { analyzeSoundProfile } from "@/lib/soundProfileAnalysis";
+import { getFrequencyBands } from "@/lib/frequencyAnalysis";
+import SoundCard from "@/components/SoundCard";
+import PremiumSoundReport from "@/components/PremiumSoundReport";
 import SmartSuggestions from "@/components/SmartSuggestions";
 import AcousticInsights from "@/components/AcousticInsights";
 import AcousticProfileSummary from "@/components/AcousticProfileSummary";
@@ -78,7 +82,11 @@ export default function Home() {
   const recentPeakRef = useRef(0);
   const keyStatsRef = useRef({});
   const stoppedRef = useRef(false);
+  const freqAccRef = useRef({ subBass: 0, bass: 0, lowMid: 0, mid: 0, highMid: 0, treble: 0, _count: 0 });
+  const freqTimelineRef = useRef([]);
   const [liveHeatmap, setLiveHeatmap] = useState({});
+  const [soundAnalysis, setSoundAnalysis] = useState(null);
+  const [freqTimeline, setFreqTimeline] = useState([]);
 
   const calculateDecibels = useCallback((analyser) => {
     const dataArray = new Float32Array(analyser.fftSize);
@@ -192,6 +200,8 @@ export default function Home() {
       pendingUploadRef.current = null;
       currentDbRef.current = 0;
       keyStatsRef.current = {};
+      freqAccRef.current = { subBass: 0, bass: 0, lowMid: 0, mid: 0, highMid: 0, treble: 0, _count: 0 };
+      freqTimelineRef.current = [];
       setIsRecording(true);
       setPermissionDenied(false);
       recentPeakRef.current = 0;
@@ -280,6 +290,20 @@ export default function Home() {
         }
       }
 
+      // Capture frequency band data for the Keyboard Sound Profile analysis
+      const freqData = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(freqData);
+      const bandData = getFrequencyBands(freqData, audioContextRef.current?.sampleRate || 48000);
+      for (const k of ["subBass", "bass", "lowMid", "mid", "highMid", "treble"]) {
+        freqAccRef.current[k] += bandData[k] || 0;
+      }
+      freqAccRef.current._count++;
+      const nowF = Date.now();
+      const lastFreqSnap = freqTimelineRef.current[freqTimelineRef.current.length - 1];
+      if (!lastFreqSnap || nowF - lastFreqSnap.t > 200) {
+        freqTimelineRef.current.push({ t: nowF - startTimeRef.current, bands: bandData });
+      }
+
       animFrameRef.current = requestAnimationFrame(meter);
     };
 
@@ -317,6 +341,35 @@ export default function Home() {
     }
 
     setSamples([...samplesRef.current]);
+
+    // Compute the Keyboard Sound Profile analysis
+    const ft = freqTimelineRef.current.slice(0, 200);
+    const acc = freqAccRef.current;
+    const bands = acc._count > 0
+      ? {
+          subBass: acc.subBass / acc._count,
+          bass: acc.bass / acc._count,
+          lowMid: acc.lowMid / acc._count,
+          mid: acc.mid / acc._count,
+          highMid: acc.highMid / acc._count,
+          treble: acc.treble / acc._count,
+        }
+      : null;
+    const analysis = analyzeSoundProfile({
+      bands,
+      freqTimeline: ft,
+      decibelSamples: samplesRef.current,
+      avgDb: samplesRef.current.length > 0
+        ? samplesRef.current.reduce((s, sm) => s + sm.db, 0) / samplesRef.current.length
+        : 0,
+      peakDb: peakRef.current,
+      minDb: minRef.current === Infinity ? 0 : minRef.current,
+      heatmap: { ...keyStatsRef.current },
+      modifications: Object.entries(saveMods).filter(([, v]) => v).map(([k]) => k),
+    });
+    setSoundAnalysis(analysis);
+    setFreqTimeline(ft);
+
     setShowSaveForm(true);
     setSaveName(prev => prev || "");
   };
@@ -347,6 +400,10 @@ export default function Home() {
     meteringStartedRef.current = false;
     keyStatsRef.current = {};
     setLiveHeatmap({});
+    freqAccRef.current = { subBass: 0, bass: 0, lowMid: 0, mid: 0, highMid: 0, treble: 0, _count: 0 };
+    freqTimelineRef.current = [];
+    setSoundAnalysis(null);
+    setFreqTimeline([]);
   };
 
   const saveRecording = async () => {
@@ -364,6 +421,8 @@ export default function Home() {
     const samplesCopy = samplesRef.current.slice(0, 500);
     const peakCopy = peakRef.current;
     const minCopy = minRef.current === Infinity ? 0 : minRef.current;
+    const analysisCopy = soundAnalysis;
+    const freqTimelineCopy = freqTimeline;
 
     // Optimistically close the form and show success immediately
     resetRecording();
@@ -406,6 +465,9 @@ export default function Home() {
         key_heatmap: Object.keys(heatmap).length > 0
           ? JSON.stringify(heatmap)
           : undefined,
+        sound_profile_data: analysisCopy
+          ? JSON.stringify({ analysis: analysisCopy, freqTimeline: freqTimelineCopy })
+          : undefined,
       });
     } catch (err) {
       toast({ title: "Failed to save", variant: "destructive" });
@@ -437,6 +499,8 @@ export default function Home() {
     const capturedWpm = wpm;
     const capturedAccuracy = accuracy;
     const capturedElapsed = elapsedTime;
+    const capturedAnalysis = soundAnalysis;
+    const capturedFreqTimeline = freqTimeline;
 
     resetRecording();
 
@@ -464,6 +528,9 @@ export default function Home() {
       audio_url: audioUrl || undefined,
       key_heatmap: Object.keys(heatmap).length > 0
         ? JSON.stringify(heatmap)
+        : undefined,
+      sound_profile_data: capturedAnalysis
+        ? JSON.stringify({ analysis: capturedAnalysis, freqTimeline: capturedFreqTimeline })
         : undefined,
     });
 
@@ -516,6 +583,16 @@ export default function Home() {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const previewRecording = {
+    name: saveName,
+    decibel_samples: JSON.stringify(samples),
+    avg_decibels: samples.length > 0 ? samples.reduce((s, sm) => s + sm.db, 0) / samples.length : 0,
+    peak_decibels: peakDb,
+    min_decibels: minDb === Infinity ? 0 : minDb,
+    switch_type: saveSwitchType,
+    modifications: JSON.stringify(Object.entries(saveMods).filter(([, v]) => v).map(([k]) => k)),
   };
 
   if (showOnboarding) {
@@ -785,6 +862,28 @@ export default function Home() {
                 </div>
                 <KeyboardHeatmap recording={{ key_heatmap: JSON.stringify(liveHeatmap) }} />
               </div>
+            )}
+
+            {/* Keyboard Sound Profile — shareable Sound Card */}
+            {soundAnalysis && (
+              <SoundCard
+                recording={previewRecording}
+                analysis={soundAnalysis}
+                freqTimeline={freqTimeline}
+              />
+            )}
+
+            {/* Premium Sound Report — Pro entitlement */}
+            {soundAnalysis && (
+              isPro ? (
+                <PremiumSoundReport
+                  recording={previewRecording}
+                  analysis={soundAnalysis}
+                  freqTimeline={freqTimeline}
+                />
+              ) : (
+                <PremiumGate featureLabel="Premium Sound Report" compact />
+              )
             )}
 
             <Input

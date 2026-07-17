@@ -82,6 +82,10 @@
     "key_heatmap": {
       "type": "string",
       "description": "JSON string of per-key dB stats: { key: { hits, avg_db, peak_db } }"
+    },
+    "sound_profile_data": {
+      "type": "string",
+      "description": "JSON string of the Keyboard Sound Profile analysis: metrics, switch guess, quality score, frequency timeline, and averaged bands"
     }
   },
   "required": [

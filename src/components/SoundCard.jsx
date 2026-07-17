@@ -83,57 +83,56 @@ export default function SoundCard({ recording, analysis, freqTimeline, compact =
         className="rounded-2xl border border-border bg-gradient-to-br from-card to-muted/40 p-4 space-y-3"
       >
         {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-1.5 text-primary">
-              <Waves className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Sound Card</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+              <Waves className="w-4 h-4 text-primary" />
             </div>
-            <p className="text-sm font-semibold mt-0.5">{recording?.name || "Untitled Keyboard"}</p>
+            <div>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-primary">Sound Card</span>
+              <p className="text-sm font-semibold leading-tight">{recording?.name || "Untitled Keyboard"}</p>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-1 justify-end">
-              <Award className={`w-4 h-4 ${scoreColor}`} />
-              <span className={`text-2xl font-mono font-bold ${scoreColor}`}>{score}</span>
-            </div>
-            <p className="text-[9px] uppercase text-muted-foreground">Quality Score</p>
+          <div className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-background border border-border">
+            <span className={`text-xl font-mono font-bold leading-none ${scoreColor}`}>{score}</span>
+            <span className="text-[8px] uppercase text-muted-foreground mt-0.5">Quality</span>
           </div>
         </div>
 
         {/* Badges */}
         <div className="flex flex-wrap gap-1.5">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${swStyle.className}`}>
+          <span className={`text-[10px] font-semibold px-2 py-1 rounded-full border ${swStyle.className}`}>
             {swStyle.label} Switch
           </span>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${sigStyle.className}`}>
+          <span className={`text-[10px] font-semibold px-2 py-1 rounded-full border ${sigStyle.className}`}>
             {sigStyle.label}
           </span>
           {analysis.switchConfidence != null && (
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {analysis.switchConfidence}% confidence
+            <span className="text-[10px] font-medium px-2 py-1 rounded-full bg-muted text-muted-foreground">
+              {analysis.switchConfidence}% conf.
             </span>
           )}
         </div>
 
         {/* Waveform */}
-        <div className="bg-background/60 rounded-lg p-2">
-          <p className="text-[9px] uppercase text-muted-foreground mb-1">Waveform</p>
+        <div className="bg-background/60 rounded-xl p-2.5">
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1.5">Waveform</p>
           <WaveformCanvas samples={samples} height={56} />
         </div>
 
         {/* Spectrogram */}
         {!compact && (
-          <div className="bg-background/60 rounded-lg p-2">
-            <p className="text-[9px] uppercase text-muted-foreground mb-1">Spectrogram</p>
+          <div className="bg-background/60 rounded-xl p-2.5">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1.5">Spectrogram</p>
             <SpectrogramCanvas timeline={freqTimeline} height={72} />
           </div>
         )}
 
         {/* Signature graph — compact bar chart of the 4 signature metrics */}
         {!compact && (
-          <div className="bg-background/60 rounded-lg p-2">
-            <p className="text-[9px] uppercase text-muted-foreground mb-1">Sound Signature</p>
-            <div className="space-y-1">
+          <div className="bg-background/60 rounded-xl p-2.5">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1.5">Sound Signature</p>
+            <div className="space-y-1.5">
               {[
                 { label: "Thockiness", value: analysis.metrics?.thockiness ?? 0, color: "bg-purple-500" },
                 { label: "Clackiness", value: analysis.metrics?.clackiness ?? 0, color: "bg-orange-500" },
@@ -141,11 +140,11 @@ export default function SoundCard({ recording, analysis, freqTimeline, compact =
                 { label: "Brightness", value: analysis.metrics?.brightness ?? 0, color: "bg-sky-500" },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-2">
-                  <span className="text-[8px] w-14 text-muted-foreground">{s.label}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <span className="text-[9px] w-16 text-muted-foreground">{s.label}</span>
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                     <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.value}%` }} />
                   </div>
-                  <span className="text-[8px] font-mono w-5 text-right">{Math.round(s.value)}</span>
+                  <span className="text-[9px] font-mono w-6 text-right">{Math.round(s.value)}</span>
                 </div>
               ))}
             </div>

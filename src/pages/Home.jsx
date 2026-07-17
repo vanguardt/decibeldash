@@ -866,24 +866,38 @@ export default function Home() {
 
             {/* Keyboard Sound Profile — shareable Sound Card */}
             {soundAnalysis && (
-              <SoundCard
-                recording={previewRecording}
-                analysis={soundAnalysis}
-                freqTimeline={freqTimeline}
-              />
-            )}
-
-            {/* Premium Sound Report — Pro entitlement */}
-            {soundAnalysis && (
-              isPro ? (
-                <PremiumSoundReport
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Analysis Results</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <SoundCard
                   recording={previewRecording}
                   analysis={soundAnalysis}
                   freqTimeline={freqTimeline}
                 />
-              ) : (
-                <PremiumGate featureLabel="Premium Sound Report" compact />
-              )
+              </div>
+            )}
+
+            {/* Premium Sound Report — Pro entitlement */}
+            {soundAnalysis && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Premium Report</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                {isPro ? (
+                  <PremiumSoundReport
+                    recording={previewRecording}
+                    analysis={soundAnalysis}
+                    freqTimeline={freqTimeline}
+                  />
+                ) : (
+                  <PremiumGate featureLabel="Premium Sound Report" />
+                )}
+              </div>
             )}
 
             <Input

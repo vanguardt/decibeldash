@@ -10,7 +10,9 @@ import RecordingCard from "@/components/RecordingCard";
 import SelectRecordingModal from "@/components/SelectRecordingModal";
 import ShareButton from "@/components/ShareButton";
 import SoundProfileBadge from "@/components/SoundProfileBadge";
+import BuildSuggestions from "@/components/BuildSuggestions";
 import { recordingWithProfile } from "@/lib/soundProfile";
+import { generateBuildSuggestions } from "@/lib/buildSuggestions";
 
 const BUILD_TYPE_STYLES = {
   Silent: "bg-blue-500/15 text-blue-400",
@@ -65,6 +67,10 @@ export default function BuildProfileDetail() {
 
   let recordings = [];
   try { recordings = JSON.parse(profile.recordings || "[]"); } catch {}
+
+  // Generate build suggestions from the dominant sound profile + acoustic
+  // data. Re-derived every render, so it updates when recordings change.
+  const buildSuggestions = generateBuildSuggestions(profile);
 
   const removeRecording = async (recId) => {
     const updated = recordings.filter((r) => r.id !== recId);
@@ -163,6 +169,11 @@ export default function BuildProfileDetail() {
           <RecordingAudioPlayer url={profile.audio_url} />
         </div>
       )}
+
+      {/* Build Suggestions */}
+      <div className="mb-5">
+        <BuildSuggestions suggestions={buildSuggestions} />
+      </div>
 
       {/* Recordings */}
       <div className="mb-4">
